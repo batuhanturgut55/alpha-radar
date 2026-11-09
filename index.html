@@ -8,6 +8,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Leaflet Harita Kütüphanesi -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script>
     tailwind.config = {
       theme: {
@@ -31,6 +36,20 @@
     body { background-color: #090B0E; color: #E5E7EB; -webkit-font-smoothing: antialiased; }
     .item-card { transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease; }
     .item-card:hover { border-color: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
+
+    /* Koyu Tema Harita Karoları */
+    .leaflet-container { background: #090B0E; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .leaflet-tile-pane { filter: brightness(0.65) invert(1) contrast(3.2) hue-rotate(200deg) saturate(0.25); }
+    .leaflet-popup-content-wrapper {
+      background: #10141A !important;
+      color: #F3F4F6 !important;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 4px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
+    }
+    .leaflet-popup-tip { background: #10141A !important; border: 1px solid rgba(255, 255, 255, 0.1); }
+    .leaflet-popup-close-button { color: #9CA3AF !important; padding: 6px !important; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans">
@@ -48,7 +67,7 @@
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             <span class="text-[11px] font-mono text-emerald-400 font-semibold">KÜMÜLATİF HAVUZ</span>
           </div>
-          <p class="text-xs text-neutral-400">Telegram'a Aktarılan Tüm Canlı İhale & Kelepir Varlıklar</p>
+          <p class="text-xs text-neutral-400">UYAP İcra, Kamu/Belediye, Sahibinden, Arabam ve Emlakjet Fırsatları</p>
         </div>
       </div>
 
@@ -77,6 +96,10 @@
           <option value="price_desc">📈 En Yüksek Fiyat</option>
         </select>
 
+        <button onclick="toggleMap()" id="mapToggleBtn" class="text-xs bg-neutral-800 hover:bg-neutral-700 text-emerald-400 border border-emerald-900/40 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1">
+          <span>🗺️</span> <span>Haritayı Kapat</span>
+        </button>
+
         <button onclick="resetRejected()" class="text-xs border border-white/10 hover:border-white/25 text-neutral-300 px-3 py-1.5 rounded-lg transition">
           Pas (<span id="passCount" class="font-mono text-emerald-400">0</span>)
         </button>
@@ -100,11 +123,11 @@
           <span id="statVisible" class="text-emerald-400 font-bold ml-1">0</span>
         </div>
         <div>
-          <span class="text-neutral-500">TOPLAM PORTFÖY DEĞERİ:</span>
+          <span class="text-neutral-500">TOPLAM DEĞER:</span>
           <span id="statPortfolio" class="text-blue-400 font-bold ml-1">₺0</span>
         </div>
         <div>
-          <span class="text-neutral-500">TOPLAM NET KÂR MARJI:</span>
+          <span class="text-neutral-500">NET KÂR MARJI:</span>
           <span id="statProfit" class="text-emerald-400 font-bold ml-1">₺0</span>
         </div>
         <div class="hidden lg:block">
@@ -124,6 +147,38 @@
     </div>
   </div>
 
+  <!-- Stratejik Bölge Filtre Bandı -->
+  <div class="border-b border-white/[0.04] bg-neutral-900/30">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2">
+        <span class="text-neutral-500 font-mono text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> BÖLGE / ŞEHİR:
+        </span>
+        <div class="flex flex-wrap items-center gap-1 font-medium">
+          <button onclick="setCity('all')" id="city-all" class="px-2.5 py-1 rounded text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 transition">Tüm Türkiye</button>
+          <button onclick="setCity('Adana')" id="city-Adana" class="px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition">📍 Adana</button>
+          <button onclick="setCity('Samsun')" id="city-Samsun" class="px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition">📍 Samsun</button>
+          <button onclick="setCity('Mersin')" id="city-Mersin" class="px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition">📍 Mersin</button>
+          <button onclick="setCity('Ankara')" id="city-Ankara" class="px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition">📍 Ankara</button>
+        </div>
+      </div>
+      <div class="text-[11px] font-mono text-neutral-500 hidden sm:block">
+        SEÇİLİ BÖLGE İLANI: <span id="statCityCount" class="text-white font-bold">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dinamik Harita Alanı -->
+  <section id="mapSection" class="max-w-6xl mx-auto px-4 md:px-6 pt-5 w-full">
+    <div class="border border-white/10 rounded-xl overflow-hidden bg-panel relative shadow-2xl">
+      <div class="absolute top-3 left-3 z-[400] bg-panel/90 backdrop-blur px-3 py-1.5 rounded-lg border border-white/10 text-xs font-mono flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span id="mapCityTitle" class="text-white font-semibold">Tüm Türkiye İhale Noktaları</span>
+      </div>
+      <div id="radarMap" style="height: 280px; width: 100%;"></div>
+    </div>
+  </section>
+
   <!-- Ana İlan Akışı -->
   <main class="max-w-6xl mx-auto px-4 md:px-6 py-6 flex-1 w-full">
     <div id="feedContainer" class="space-y-3">
@@ -139,9 +194,95 @@
 
   <script>
     const DATA_URL = "https://raw.githubusercontent.com/batuhanturgut55/alpha-radar/main/data.json";
-    const TTL_SECONDS = 14 * 24 * 3600; // 14 Günlük geçerlilik süresi
+    const TTL_SECONDS = 14 * 24 * 3600;
     let pool = [];
     let currentCategory = 'all';
+    let currentCity = 'all';
+    let map = null;
+    let markersLayer = null;
+
+    // Şehir Merkez Koordinatları (Enlem, Boylam, Zoom)
+    const CITY_COORDS = {
+      'all': { lat: 39.0, lng: 35.2, zoom: 6 },
+      'Adana': { lat: 37.0000, lng: 35.3213, zoom: 11 },
+      'Samsun': { lat: 41.2867, lng: 36.3300, zoom: 11 },
+      'Mersin': { lat: 36.8121, lng: 34.6415, zoom: 11 },
+      'Ankara': { lat: 39.9334, lng: 32.8597, zoom: 10 }
+    };
+
+    function initMap() {
+      if (map) return;
+      map = L.map('radarMap', { zoomControl: false }).setView([CITY_COORDS['all'].lat, CITY_COORDS['all'].lng], CITY_COORDS['all'].zoom);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      markersLayer = L.layerGroup().addTo(map);
+    }
+
+    function toggleMap() {
+      const sec = document.getElementById('mapSection');
+      const btn = document.getElementById('mapToggleBtn');
+      if (sec.classList.contains('hidden')) {
+        sec.classList.remove('hidden');
+        btn.innerHTML = '<span>🗺️</span> <span>Haritayı Kapat</span>';
+        setTimeout(() => map && map.invalidateSize(), 200);
+      } else {
+        sec.classList.add('hidden');
+        btn.innerHTML = '<span>🗺️</span> <span>Haritayı Aç</span>';
+      }
+    }
+
+    function updateMapPoints(items) {
+      if (!map || !markersLayer) return;
+      markersLayer.clearLayers();
+
+      const cityTarget = CITY_COORDS[currentCity] || CITY_COORDS['all'];
+      map.flyTo([cityTarget.lat, cityTarget.lng], cityTarget.zoom, { duration: 1.2 });
+      document.getElementById('mapCityTitle').innerText = currentCity === 'all' 
+        ? 'Tüm Türkiye İhale Noktaları (' + items.length + ' İlan)' 
+        : currentCity + ' Bölgesi İhale Noktaları (' + items.length + ' İlan)';
+
+      items.forEach((item, idx) => {
+        const cName = item.city || 'Türkiye';
+        const base = CITY_COORDS[cName] || CITY_COORDS['all'];
+
+        // Noktaları merkez etrafına doğal şekilde dağıt
+        const angle = (idx * 137.5) * (Math.PI / 180);
+        const radius = (idx % 6 + 1) * 0.018;
+        const lat = base.lat + (Math.sin(angle) * radius);
+        const lng = base.lng + (Math.cos(angle) * radius);
+
+        const iconHtml = `
+          <div style="background:#10141A; border:1px solid #10B981; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 10px rgba(16,185,129,0.5); font-size:14px;">
+            ${item.categoryIcon || '📦'}
+          </div>
+        `;
+        const customIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [30, 30], iconAnchor: [15, 15] });
+
+        const market = (item.marketPrice || 0).toLocaleString('tr-TR');
+        const offer = (item.offerPrice || 0).toLocaleString('tr-TR');
+        const profit = (item.estimatedProfit || 0).toLocaleString('tr-TR');
+
+        const popupContent = `
+          <div class="text-xs font-sans space-y-1.5 p-1">
+            <div class="font-bold text-white leading-tight line-clamp-2">${item.title}</div>
+            <div class="text-[11px] text-emerald-400 font-mono font-semibold">📍 ${cName} / ${item.district || 'Merkez'}</div>
+            <div class="border-t border-white/10 pt-1 font-mono text-[11px] space-y-0.5">
+              <div class="text-neutral-400 line-through">Rayiç: ₺${market}</div>
+              <div class="text-white font-bold">Teklif: ₺${offer}</div>
+              <div class="text-emerald-400 font-semibold">+₺${profit} Marj</div>
+            </div>
+            <a href="${item.sourceUrl || '#'}" target="_blank" class="block text-center mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1 px-2 rounded text-[11px] transition">İlana Git ↗</a>
+          </div>
+        `;
+
+        L.marker([lat, lng], { icon: customIcon }).bindPopup(popupContent).addTo(markersLayer);
+      });
+    }
 
     function getRejected() {
       try { return JSON.parse(localStorage.getItem('alpha_rej') || '[]'); }
@@ -205,6 +346,20 @@
       render();
     }
 
+    function setCity(city) {
+      currentCity = city;
+      ['all', 'Adana', 'Samsun', 'Mersin', 'Ankara'].forEach(c => {
+        const el = document.getElementById('city-' + c);
+        if (!el) return;
+        if (c === city) {
+          el.className = 'px-2.5 py-1 rounded text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 transition font-semibold';
+        } else {
+          el.className = 'px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition';
+        }
+      });
+      render();
+    }
+
     async function loadData() {
       try {
         document.getElementById('statSync').innerText = 'Senkronize ediliyor...';
@@ -228,6 +383,17 @@
 
       let list = pool.filter(item => !rej.includes(item.id));
 
+      // Şehir Filtresi
+      if (currentCity !== 'all') {
+        list = list.filter(item => {
+          const c = (item.city || '').toLowerCase();
+          const d = (item.district || '').toLowerCase();
+          const t = (item.title || '').toLowerCase();
+          const target = currentCity.toLowerCase();
+          return c.includes(target) || d.includes(target) || t.includes(target);
+        });
+      }
+
       // Kategori Filtresi
       if (currentCategory === 'expiring_soon') {
         list = list.filter(item => getRemainingDays(item.added_ts) <= 2);
@@ -247,7 +413,7 @@
         });
       }
 
-      // Kelime Arama
+      // Arama Filtresi
       if (q) {
         list = list.filter(item => 
           (item.title || '').toLowerCase().includes(q) ||
@@ -269,23 +435,27 @@
         list.sort((a, b) => (b.offerPrice || 0) - (a.offerPrice || 0));
       }
 
-      // Finansal Takometre Hesaplamaları
+      // Sayaçlar
       document.getElementById('statTotal').innerText = pool.length;
       document.getElementById('statVisible').innerText = list.length;
+      document.getElementById('statCityCount').innerText = list.length;
 
       const totalPortfolio = list.reduce((acc, it) => acc + (it.marketPrice || 0), 0);
       const totalProfit = list.reduce((acc, it) => acc + (it.estimatedProfit || 0), 0);
       document.getElementById('statPortfolio').innerText = '₺' + totalPortfolio.toLocaleString('tr-TR');
       document.getElementById('statProfit').innerText = '₺' + totalProfit.toLocaleString('tr-TR');
 
+      // Harita Pinlerini Güncelle
+      updateMapPoints(list);
+
       const container = document.getElementById('feedContainer');
 
       if (list.length === 0) {
         container.innerHTML = `
           <div class="py-16 text-center border border-white/5 rounded-lg bg-panel p-6">
-            <p class="text-sm font-semibold text-white mb-1">Seçilen Kriterde İlan Bulunamadı</p>
-            <p class="text-xs text-neutral-500 mb-4">Filtreleri sıfırlayarak tüm kümülatif havuza dönebilirsiniz.</p>
-            <button onclick="document.getElementById('priceFilter').value='all'; setCategory('all'); render();" class="text-xs px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white border border-white/10 transition">Filtreleri Sıfırla</button>
+            <p class="text-sm font-semibold text-white mb-1">Bu Şehir veya Kriterde İlan Bulunamadı</p>
+            <p class="text-xs text-neutral-500 mb-4">Şehir filtresini 'Tüm Türkiye' yaparak arama havuzunu genişletebilirsiniz.</p>
+            <button onclick="setCity('all'); render();" class="text-xs px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white border border-white/10 transition">Tüm İlanları Göster</button>
           </div>
         `;
         return;
@@ -328,7 +498,8 @@
                   </span>
                   <span class="text-neutral-500 font-mono text-[11px]">${docket}</span>
                   <span class="text-neutral-600">•</span>
-                  <span class="text-neutral-300 font-medium">${item.city || 'Türkiye'} / ${item.district || item.source || 'Resmi'}</span>
+                  <span class="text-emerald-400 font-semibold">${item.city || 'Türkiye'}</span>
+                  <span class="text-neutral-500">/ ${item.district || item.source || 'Resmi'}</span>
                 </div>
 
                 <h2 class="text-sm md:text-base font-semibold text-white leading-snug line-clamp-2 mb-1 hover:text-emerald-400 transition">
@@ -373,6 +544,7 @@
       }).join('');
     }
 
+    initMap();
     loadData();
     setInterval(loadData, 30000);
   </script>
