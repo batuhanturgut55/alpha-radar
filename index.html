@@ -422,31 +422,37 @@
       render();
     }
 
-    async function loadData() {
-      try {
-        document.getElementById('statSync').innerText = 'Canlı taranıyor...';
-        // GitHub API doğrudan son commit halini 0 gecikmeyle verir
-        const apiUri = "https://api.github.com/repos/batuhanturgut55/alpha-radar/contents/data.json?ref=main&t=" + Date.now();
-        const res = await fetch(apiUri, { headers: { "Accept": "application/vnd.github.v3+json" } });
-        if (!res.ok) throw new Error("API " + res.status);
-        const dataJson = await res.json();
-        const binaryString = atob(dataJson.content);
-        const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
-        const decoded = new TextDecoder("utf-8").decode(bytes);
-        pool = JSON.parse(decoded);
-        document.getElementById('statSync').innerText = new Date().toLocaleTimeString('tr-TR');
-        render();
-      } catch (e) {
-        console.error("Yükleme hatası:", e);
-        // Fallback: Doğrudan raw denemesi
+        async function loadData() {
+      const syncEl = document.getElementById("statSync");
+      if (syncEl) syncEl.innerText = "Yenileniyor...";
+
+      const sources = [
+        "/data.json?t=" + Date.now(),
+        "https://raw.githubusercontent.com/batuhanturgut55/alpha-radar/main/data.json?t=" + Date.now()
+      ];
+
+      let loadedData = null;
+      for (const src of sources) {
         try {
-          const fb = await fetch("https://raw.githubusercontent.com/batuhanturgut55/alpha-radar/main/data.json?t=" + Date.now());
-          pool = await fb.json();
-          document.getElementById('statSync').innerText = new Date().toLocaleTimeString('tr-TR');
-          render();
-        } catch(err) {
-          document.getElementById('statSync').innerText = 'Bağlantı Hatası';
+          const res = await fetch(src, { cache: "no-store" });
+          if (res.ok) {
+            const json = await res.json();
+            if (Array.isArray(json)) {
+              loadedData = json;
+              break;
+            }
+          }
+        } catch (e) {
+          console.warn("Kaynak denenemedi (" + src + "):", e);
         }
+      }
+
+      if (loadedData) {
+        pool = loadedData;
+        if (syncEl) syncEl.innerText = new Date().toLocaleTimeString("tr-TR");
+        render();
+      } else {
+        if (syncEl) syncEl.innerText = "Veri Alınamadı";
       }
     }
 
