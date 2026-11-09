@@ -34,10 +34,15 @@
   </script>
   <style>
     body { background-color: #090B0E; color: #E5E7EB; -webkit-font-smoothing: antialiased; }
-    .item-card { transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease; }
+    .item-card { transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
     .item-card:hover { border-color: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
+    .card-highlight {
+      border-color: #10B981 !important;
+      box-shadow: 0 0 25px -3px rgba(16, 185, 129, 0.45) !important;
+      background-color: #141E1C !important;
+    }
 
-    /* Koyu Tema Harita Karoları */
+    /* Koyu Tema Harita */
     .leaflet-container { background: #090B0E; font-family: 'Plus Jakarta Sans', sans-serif; }
     .leaflet-tile-pane { filter: brightness(0.65) invert(1) contrast(3.2) hue-rotate(200deg) saturate(0.25); }
     .leaflet-popup-content-wrapper {
@@ -56,7 +61,7 @@
 
   <!-- Üst İstihbarat & Portföy Barı -->
   <header class="border-b border-white/[0.06] bg-canvas/90 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 py-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono font-bold text-base shadow-sm">
           α
@@ -71,9 +76,9 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+      <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
         <!-- Arama Kutusu -->
-        <div class="relative flex-1 md:w-48">
+        <div class="relative flex-1 md:w-44">
           <input type="text" id="searchInput" oninput="render()" placeholder="Şehir, marka, esas no..." 
                  class="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 transition">
         </div>
@@ -96,14 +101,20 @@
           <option value="price_desc">📈 En Yüksek Fiyat</option>
         </select>
 
-        <button onclick="toggleMap()" id="mapToggleBtn" class="text-xs bg-neutral-800 hover:bg-neutral-700 text-emerald-400 border border-emerald-900/40 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1">
-          <span>🗺️</span> <span>Haritayı Kapat</span>
+        <!-- CSV / Excel İndir Butonu -->
+        <button onclick="exportToCSV()" title="Filtrelenen ilanları Excel (CSV) olarak indir" class="text-xs bg-neutral-800 hover:bg-neutral-700 text-emerald-400 border border-emerald-900/40 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1.5">
+          <span>📥</span> <span class="hidden sm:inline">Excel</span>
+        </button>
+
+        <!-- Harita Aç/Kapat Butonu -->
+        <button onclick="toggleMap()" id="mapToggleBtn" class="text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-white/10 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1">
+          <span>🗺️</span> <span>Harita</span>
         </button>
 
         <button onclick="resetRejected()" class="text-xs border border-white/10 hover:border-white/25 text-neutral-300 px-3 py-1.5 rounded-lg transition">
           Pas (<span id="passCount" class="font-mono text-emerald-400">0</span>)
         </button>
-        <button onclick="loadData()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-1.5 rounded-lg transition shadow-sm">
+        <button onclick="loadData()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-lg transition shadow-sm">
           Yenile
         </button>
       </div>
@@ -112,8 +123,8 @@
 
   <!-- Özet Metrik ve Portföy Takometresi -->
   <div class="border-b border-white/[0.04] bg-neutral-950/40">
-    <div class="max-w-6xl mx-auto px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
-      <div class="flex items-center gap-6">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 py-2 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
+      <div class="flex items-center gap-5">
         <div>
           <span class="text-neutral-500">HAVUZ:</span>
           <span id="statTotal" class="text-white font-bold ml-1">0</span>
@@ -201,7 +212,6 @@
     let map = null;
     let markersLayer = null;
 
-    // Şehir Merkez Koordinatları (Enlem, Boylam, Zoom)
     const CITY_COORDS = {
       'all': { lat: 39.0, lng: 35.2, zoom: 6 },
       'Adana': { lat: 37.0000, lng: 35.3213, zoom: 11 },
@@ -236,6 +246,15 @@
       }
     }
 
+    function focusCard(cardId) {
+      const el = document.getElementById('card-' + cardId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('card-highlight');
+        setTimeout(() => el.classList.remove('card-highlight'), 2500);
+      }
+    }
+
     function updateMapPoints(items) {
       if (!map || !markersLayer) return;
       markersLayer.clearLayers();
@@ -250,18 +269,28 @@
         const cName = item.city || 'Türkiye';
         const base = CITY_COORDS[cName] || CITY_COORDS['all'];
 
-        // Noktaları merkez etrafına doğal şekilde dağıt
         const angle = (idx * 137.5) * (Math.PI / 180);
         const radius = (idx % 6 + 1) * 0.018;
         const lat = base.lat + (Math.sin(angle) * radius);
         const lng = base.lng + (Math.cos(angle) * radius);
 
+        // Kategoriye Göre Renkli Pinler (Vasıta: Mavi, Tarla: Yeşil, Gayrimenkul: Turuncu)
+        let pinColor = '#10B981'; // Yeşil
+        let pinShadow = 'rgba(16,185,129,0.5)';
+        if (item.category === 'automotive') {
+          pinColor = '#38BDF8'; // Mavi
+          pinShadow = 'rgba(56,189,248,0.5)';
+        } else if (item.category === 'realestate') {
+          pinColor = '#F97316'; // Turuncu
+          pinShadow = 'rgba(249,115,22,0.5)';
+        }
+
         const iconHtml = `
-          <div style="background:#10141A; border:1px solid #10B981; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 10px rgba(16,185,129,0.5); font-size:14px;">
+          <div style="background:#10141A; border:2px solid ${pinColor}; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px ${pinShadow}; font-size:14px; cursor:pointer;">
             ${item.categoryIcon || '📦'}
           </div>
         `;
-        const customIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [30, 30], iconAnchor: [15, 15] });
+        const customIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
 
         const market = (item.marketPrice || 0).toLocaleString('tr-TR');
         const offer = (item.offerPrice || 0).toLocaleString('tr-TR');
@@ -270,18 +299,55 @@
         const popupContent = `
           <div class="text-xs font-sans space-y-1.5 p-1">
             <div class="font-bold text-white leading-tight line-clamp-2">${item.title}</div>
-            <div class="text-[11px] text-emerald-400 font-mono font-semibold">📍 ${cName} / ${item.district || 'Merkez'}</div>
+            <div class="text-[11px] font-mono font-semibold" style="color:${pinColor};">📍 ${cName} / ${item.district || 'Merkez'}</div>
             <div class="border-t border-white/10 pt-1 font-mono text-[11px] space-y-0.5">
               <div class="text-neutral-400 line-through">Rayiç: ₺${market}</div>
               <div class="text-white font-bold">Teklif: ₺${offer}</div>
               <div class="text-emerald-400 font-semibold">+₺${profit} Marj</div>
             </div>
-            <a href="${item.sourceUrl || '#'}" target="_blank" class="block text-center mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1 px-2 rounded text-[11px] transition">İlana Git ↗</a>
+            <div class="flex items-center gap-1.5 pt-1.5">
+              <button onclick="focusCard('${item.id}')" class="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white font-medium py-1 px-2 rounded text-[11px] transition text-center">Listede Gör ↓</button>
+              <a href="${item.sourceUrl || '#'}" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1 px-2 rounded text-[11px] transition text-center">İlana Git ↗</a>
+            </div>
           </div>
         `;
 
         L.marker([lat, lng], { icon: customIcon }).bindPopup(popupContent).addTo(markersLayer);
       });
+    }
+
+    function exportToCSV() {
+      const activeList = getFilteredList();
+      if (!activeList || activeList.length === 0) {
+        alert("İndirilecek ilan bulunamadı.");
+        return;
+      }
+
+      const headers = ["Esas / Dosya No", "Kategori", "İlan Başlığı", "Şehir", "Merci / Kurum", "Rayiç Bedel (TL)", "Fırsat Fiyatı (TL)", "Net Marj (TL)", "Kalan Gün", "Resmi Link"];
+      const rows = activeList.map(item => [
+        `"${(item.docketNo || item.id || '').replace(/"/g, '""')}"`,
+        `"${(item.categoryName || item.category || '').replace(/"/g, '""')}"`,
+        `"${(item.title || '').replace(/"/g, '""')}"`,
+        `"${(item.city || 'Türkiye').replace(/"/g, '""')}"`,
+        `"${(item.district || item.source || '').replace(/"/g, '""')}"`,
+        item.marketPrice || 0,
+        item.offerPrice || 0,
+        item.estimatedProfit || 0,
+        getRemainingDays(item.added_ts),
+        `"${item.sourceUrl || ''}"`
+      ]);
+
+      const csvContent = "﻿" + [headers.join(";"), ...rows.map(r => r.join(";"))].join("
+");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Alpha_Radar_Portfoy_${currentCity}_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     function getRejected() {
@@ -373,17 +439,14 @@
       }
     }
 
-    function render() {
+    function getFilteredList() {
       const rej = getRejected();
-      document.getElementById('passCount').innerText = rej.length;
-
       const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
       const sortType = document.getElementById('sortSelect')?.value || 'newest';
       const priceFilter = document.getElementById('priceFilter')?.value || 'all';
 
       let list = pool.filter(item => !rej.includes(item.id));
 
-      // Şehir Filtresi
       if (currentCity !== 'all') {
         list = list.filter(item => {
           const c = (item.city || '').toLowerCase();
@@ -394,14 +457,12 @@
         });
       }
 
-      // Kategori Filtresi
       if (currentCategory === 'expiring_soon') {
         list = list.filter(item => getRemainingDays(item.added_ts) <= 2);
       } else if (currentCategory !== 'all') {
         list = list.filter(item => item.category === currentCategory);
       }
 
-      // Fiyat Filtresi
       if (priceFilter !== 'all') {
         list = list.filter(item => {
           const price = item.offerPrice || 0;
@@ -413,7 +474,6 @@
         });
       }
 
-      // Arama Filtresi
       if (q) {
         list = list.filter(item => 
           (item.title || '').toLowerCase().includes(q) ||
@@ -424,7 +484,6 @@
         );
       }
 
-      // Sıralama
       if (sortType === 'profit') {
         list.sort((a, b) => (b.estimatedProfit || 0) - (a.estimatedProfit || 0));
       } else if (sortType === 'expiring') {
@@ -435,7 +494,15 @@
         list.sort((a, b) => (b.offerPrice || 0) - (a.offerPrice || 0));
       }
 
-      // Sayaçlar
+      return list;
+    }
+
+    function render() {
+      const rej = getRejected();
+      document.getElementById('passCount').innerText = rej.length;
+
+      const list = getFilteredList();
+
       document.getElementById('statTotal').innerText = pool.length;
       document.getElementById('statVisible').innerText = list.length;
       document.getElementById('statCityCount').innerText = list.length;
@@ -445,7 +512,6 @@
       document.getElementById('statPortfolio').innerText = '₺' + totalPortfolio.toLocaleString('tr-TR');
       document.getElementById('statProfit').innerText = '₺' + totalProfit.toLocaleString('tr-TR');
 
-      // Harita Pinlerini Güncelle
       updateMapPoints(list);
 
       const container = document.getElementById('feedContainer');
@@ -482,7 +548,7 @@
         const cleanCity = (item.city || 'Türkiye').replace(/'/g, "\'");
 
         return `
-          <div class="item-card bg-panel border border-borderSubtle rounded-xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div id="card-${item.id}" class="item-card bg-panel border border-borderSubtle rounded-xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div class="flex items-start gap-3.5 flex-1 min-w-0">
               <div class="w-10 h-10 rounded-lg bg-neutral-900 border border-white/10 flex items-center justify-center text-lg shrink-0 select-none shadow-sm mt-0.5">
                 ${categoryIcon}
