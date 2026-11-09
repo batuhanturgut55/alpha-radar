@@ -4,460 +4,181 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ALPHA RADAR — Finansal İstihbarat & Varlık Havuzu</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Leaflet Harita Kütüphanesi -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"Space Grotesk"', 'monospace']
-          },
-          colors: {
-            canvas: '#090B0E',
-            panel: '#10141A',
-            panelHover: '#141A23',
-            borderSubtle: 'rgba(255, 255, 255, 0.06)',
-            accent: '#10B981'
-          }
-        }
-      }
-    }
-  </script>
   <style>
-    body { background-color: #090B0E; color: #E5E7EB; -webkit-font-smoothing: antialiased; }
-    .item-card { transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
-    .item-card:hover { border-color: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
-    .card-highlight {
-      border-color: #10B981 !important;
-      box-shadow: 0 0 25px -3px rgba(16, 185, 129, 0.45) !important;
-      background-color: #141E1C !important;
-    }
-
-    .leaflet-container { background: #090B0E; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: #090B0E; color: #E5E7EB; font-family: system-ui, -apple-system, sans-serif; }
+    .item-card { transition: all 0.2s ease; border: 1px solid rgba(255, 255, 255, 0.08); background: #10141A; }
+    .item-card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+    .leaflet-container { background: #090B0E; }
     .leaflet-tile-pane { filter: brightness(0.65) invert(1) contrast(3.2) hue-rotate(200deg) saturate(0.25); }
-    .leaflet-popup-content-wrapper {
-      background: #10141A !important;
-      color: #F3F4F6 !important;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-      padding: 4px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
-    }
-    .leaflet-popup-tip { background: #10141A !important; border: 1px solid rgba(255, 255, 255, 0.1); }
-    .leaflet-popup-close-button { color: #9CA3AF !important; padding: 6px !important; }
+    .leaflet-popup-content-wrapper { background: #10141A !important; color: #F3F4F6 !important; border: 1px solid rgba(255, 255, 255, 0.12); }
   </style>
 </head>
-<body class="min-h-screen flex flex-col font-sans">
-
-  <!-- Üst İstihbarat & Portföy Barı -->
-  <header class="border-b border-white/[0.06] bg-canvas/90 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 md:px-6 py-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<body class="min-h-screen flex flex-col">
+  <header class="border-b border-white/10 bg-[#090B0E]/90 sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono font-bold text-base shadow-sm">
-          α
-        </div>
+        <div class="w-8 h-8 rounded bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">α</div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-sm font-bold tracking-tight text-white uppercase">Alpha Radar</h1>
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-[11px] font-mono text-emerald-400 font-semibold">İCRA & PİYASA HAVUZU</span>
-          </div>
-          <p class="text-xs text-neutral-400">UYAP İcra, Kamu, Sahibinden, Arabam ve Emlakjet Fırsatları</p>
+          <h1 class="text-sm font-bold text-white uppercase tracking-wider">Alpha Radar</h1>
+          <p class="text-[11px] text-neutral-400">İcra, Kamu & Serbest Piyasa Varlık Havuzu</p>
         </div>
       </div>
-
-      <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-        <div class="relative flex-1 md:w-44">
-          <input type="text" id="searchInput" oninput="render()" placeholder="Şehir, marka, esas no..." 
-                 class="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 transition">
-        </div>
-
-        <select id="priceFilter" onchange="render()" class="bg-neutral-900 border border-white/10 text-neutral-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 transition font-mono">
-          <option value="all">💵 Tüm Fiyatlar</option>
-          <option value="0-500k">🟢 ₺0 - ₺500.000</option>
-          <option value="500k-1.5m">₺500.000 - ₺1.5M</option>
-          <option value="1.5m-5m">₺1.5M - ₺5M</option>
-          <option value="5m+">₺5.000.000+</option>
+      <div class="flex flex-wrap items-center gap-2">
+        <input type="text" id="searchInput" oninput="render()" placeholder="Şehir, marka, esas..." class="bg-neutral-900 border border-white/10 rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-emerald-500">
+        <select id="channelFilter" onchange="render()" class="bg-neutral-900 border border-white/10 text-neutral-300 text-xs rounded px-2 py-1">
+          <option value="all">Tüm Kaynaklar</option>
+          <option value="icra">UYAP / Kamu</option>
+          <option value="piyasa">Serbest Piyasa</option>
         </select>
-
-        <!-- Kaynak Filtresi (İcra vs Serbest Piyasa) -->
-        <select id="channelFilter" onchange="render()" class="bg-neutral-900 border border-white/10 text-neutral-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 transition font-mono">
-          <option value="all">🌐 Tüm Kaynaklar</option>
-          <option value="icra">⚖️ UYAP / Kamu İhalesi</option>
-          <option value="piyasa">🛒 Serbest Piyasa (Sahibinden/Arabam/Emlakjet)</option>
-        </select>
-        
-        <select id="sortSelect" onchange="render()" class="bg-neutral-900 border border-white/10 text-neutral-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 transition font-mono">
-          <option value="newest">🕒 En Yeni</option>
-          <option value="expiring">⏳ Süresi Bitenler</option>
-          <option value="profit">💰 En Yüksek Marj</option>
-          <option value="price_asc">📉 En Düşük Fiyat</option>
-          <option value="price_desc">📈 En Yüksek Fiyat</option>
-        </select>
-
-        <button onclick="exportToCSV()" title="Excel Olarak İndir" class="text-xs bg-neutral-800 hover:bg-neutral-700 text-emerald-400 border border-emerald-900/40 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1.5">
-          <span>📥</span> <span class="hidden sm:inline">Excel</span>
-        </button>
-
-        <button onclick="toggleMap()" id="mapToggleBtn" class="text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-white/10 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1">
-          <span>🗺️</span> <span>Harita</span>
-        </button>
-
-        <button onclick="resetRejected()" class="text-xs border border-white/10 hover:border-white/25 text-neutral-300 px-3 py-1.5 rounded-lg transition">
-          Pas (<span id="passCount" class="font-mono text-emerald-400">0</span>)
-        </button>
-        <button onclick="loadData()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-1.5 rounded-lg transition shadow-sm">
-          Yenile
-        </button>
+        <button onclick="loadData()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1 rounded">Yenile</button>
       </div>
     </div>
   </header>
 
-  <!-- Özet Metrik ve Portföy Takometresi -->
-  <div class="border-b border-white/[0.04] bg-neutral-950/40">
-    <div class="max-w-6xl mx-auto px-4 md:px-6 py-2 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
-      <div class="flex items-center gap-5">
-        <div>
-          <span class="text-neutral-500">HAVUZ:</span>
-          <span id="statTotal" class="text-white font-bold ml-1">0</span>
-        </div>
-        <div>
-          <span class="text-neutral-500">LİSTELENEN:</span>
-          <span id="statVisible" class="text-emerald-400 font-bold ml-1">0</span>
-        </div>
-        <div>
-          <span class="text-neutral-500">TOPLAM DEĞER:</span>
-          <span id="statPortfolio" class="text-blue-400 font-bold ml-1">₺0</span>
-        </div>
-        <div>
-          <span class="text-neutral-500">NET KÂR MARJI:</span>
-          <span id="statProfit" class="text-emerald-400 font-bold ml-1">₺0</span>
-        </div>
-        <div class="hidden lg:block">
-          <span class="text-neutral-500">SENKRON:</span>
-          <span id="statSync" class="text-neutral-300 ml-1">--:--:--</span>
-        </div>
+  <div class="border-b border-white/5 bg-neutral-950/60 px-4 py-2 text-xs font-mono">
+    <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center gap-4">
+        <div><span class="text-neutral-500">HAVUZ:</span> <span id="statTotal" class="text-white font-bold">0</span></div>
+        <div><span class="text-neutral-500">LİSTELENEN:</span> <span id="statVisible" class="text-emerald-400 font-bold">0</span></div>
+        <div><span class="text-neutral-500">DURUM:</span> <span id="statSync" class="text-emerald-400 font-bold">Bağlanıyor...</span></div>
       </div>
-
-      <!-- Kategori Butonları -->
       <div class="flex items-center gap-1">
-        <button onclick="setCategory('all')" id="btn-all" class="px-2.5 py-1 rounded text-xs font-medium bg-neutral-800 text-white">Tümü</button>
-        <button onclick="setCategory('expiring_soon')" id="btn-expiring_soon" class="px-2.5 py-1 rounded text-xs font-medium text-amber-400 hover:bg-amber-950/30 transition">⏳ Son 48 Saat</button>
-        <button onclick="setCategory('automotive')" id="btn-automotive" class="px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition">🚗 Vasıta</button>
-        <button onclick="setCategory('land')" id="btn-land" class="px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition">🌾 Tarla/Arsa</button>
-        <button onclick="setCategory('realestate')" id="btn-realestate" class="px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition">🏢 Gayrimenkul</button>
+        <button onclick="setCategory('all')" id="btn-all" class="px-2 py-0.5 rounded text-xs bg-neutral-800 text-white">Tümü</button>
+        <button onclick="setCategory('automotive')" id="btn-automotive" class="px-2 py-0.5 rounded text-xs text-neutral-400">Vasıta</button>
+        <button onclick="setCategory('land')" id="btn-land" class="px-2 py-0.5 rounded text-xs text-neutral-400">Tarla</button>
+        <button onclick="setCategory('realestate')" id="btn-realestate" class="px-2 py-0.5 rounded text-xs text-neutral-400">Emlak</button>
       </div>
     </div>
   </div>
 
-  <!-- Stratejik Bölge Filtre Bandı -->
-  <div class="border-b border-white/[0.04] bg-neutral-900/30">
-    <div class="max-w-6xl mx-auto px-4 md:px-6 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
-      <div class="flex items-center gap-2">
-        <span class="text-neutral-500 font-mono text-[11px] uppercase tracking-wider flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> BÖLGE:
-        </span>
-        <div class="flex flex-wrap items-center gap-1 font-medium">
-          <button onclick="setCity('all')" id="city-all" class="px-2.5 py-1 rounded text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 transition">Tüm Türkiye</button>
-          <button onclick="setCity('Adana')" id="city-Adana" class="px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition">📍 Adana</button>
-          <button onclick="setCity('Samsun')" id="city-Samsun" class="px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition">📍 Samsun</button>
-          <button onclick="setCity('Mersin')" id="city-Mersin" class="px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition">📍 Mersin</button>
-          <button onclick="setCity('Ankara')" id="city-Ankara" class="px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition">📍 Ankara</button>
-        </div>
-      </div>
-      <div class="text-[11px] font-mono text-neutral-500 hidden sm:block">
-        SEÇİLİ İLAN: <span id="statCityCount" class="text-white font-bold">0</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Dinamik Harita Alanı -->
-  <section id="mapSection" class="max-w-6xl mx-auto px-4 md:px-6 pt-5 w-full">
-    <div class="border border-white/10 rounded-xl overflow-hidden bg-panel relative shadow-2xl">
-      <div class="absolute top-3 left-3 z-[400] bg-panel/90 backdrop-blur px-3 py-1.5 rounded-lg border border-white/10 text-xs font-mono flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-        <span id="mapCityTitle" class="text-white font-semibold">Tüm Türkiye İhale & Piyasa Noktaları</span>
-      </div>
-      <div id="radarMap" style="height: 300px; width: 100%;"></div>
+  <section class="max-w-6xl mx-auto px-4 pt-4 w-full">
+    <div class="border border-white/10 rounded-lg overflow-hidden relative" style="height: 260px;">
+      <div id="radarMap" style="height: 100%; width: 100%;"></div>
     </div>
   </section>
 
-  <!-- Ana İlan Akışı -->
-  <main class="max-w-6xl mx-auto px-4 md:px-6 py-6 flex-1 w-full">
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
     <div id="feedContainer" class="space-y-3">
-      <div class="py-20 text-center text-xs text-neutral-500 font-mono">
-        Kümülatif istihbarat havuzu taranıyor...
-      </div>
+      <div class="text-center text-xs text-neutral-500 py-10 font-mono">Veriler taranıyor...</div>
     </div>
   </main>
 
-  <footer class="border-t border-white/[0.04] py-6 text-center text-xs text-neutral-600 font-mono">
-    Alpha Radar • 7/24 Kesintisiz Kümülatif İstihbarat & Varlık Havuzu
-  </footer>
-
   <script>
-    const DATA_URL = "https://raw.githubusercontent.com/batuhanturgut55/alpha-radar/main/data.json";
-    const TTL_SECONDS = 14 * 24 * 3600;
     let pool = [];
     let currentCategory = 'all';
-    let currentCity = 'all';
     let map = null;
     let markersLayer = null;
 
-    const CITY_CENTERS = {
-      'all': { lat: 39.0, lng: 35.2, zoom: 6 },
-      'Adana': { lat: 37.0000, lng: 35.3213, zoom: 11 },
-      'Samsun': { lat: 41.2867, lng: 36.3300, zoom: 11 },
-      'Mersin': { lat: 36.8121, lng: 34.6415, zoom: 11 },
-      'Ankara': { lat: 39.9334, lng: 32.8597, zoom: 10 }
-    };
-
     function initMap() {
-      if (map) return;
-      map = L.map('radarMap', { zoomControl: false }).setView([CITY_CENTERS['all'].lat, CITY_CENTERS['all'].lng], CITY_CENTERS['all'].zoom);
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '© OpenStreetMap'
-      }).addTo(map);
-
-      markersLayer = L.layerGroup().addTo(map);
+      try {
+        if (map) return;
+        map = L.map('radarMap', { zoomControl: false }).setView([39.0, 35.2], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+      } catch(e) { console.error('Map init error:', e); }
     }
 
-    function toggleMap() {
-      const sec = document.getElementById('mapSection');
-      const btn = document.getElementById('mapToggleBtn');
-      if (sec.classList.contains('hidden')) {
-        sec.classList.remove('hidden');
-        btn.innerHTML = '<span>🗺️</span> <span>Haritayı Kapat</span>';
-        setTimeout(() => map && map.invalidateSize(), 200);
-      } else {
-        sec.classList.add('hidden');
-        btn.innerHTML = '<span>🗺️</span> <span>Haritayı Aç</span>';
-      }
-    }
-
-    function focusCard(cardId) {
-      const el = document.getElementById('card-' + cardId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('card-highlight');
-        setTimeout(() => el.classList.remove('card-highlight'), 2500);
-      }
-    }
-
-    function updateMapPoints(items) {
+    function updateMarkers(items) {
       if (!map || !markersLayer) return;
       markersLayer.clearLayers();
-
-      const cityTarget = CITY_CENTERS[currentCity] || CITY_CENTERS['all'];
-      map.flyTo([cityTarget.lat, cityTarget.lng], cityTarget.zoom, { duration: 1.2 });
-      document.getElementById('mapCityTitle').innerText = currentCity === 'all' 
-        ? 'Tüm Türkiye (' + items.length + ' İlan)' 
-        : currentCity + ' Bölgesi (' + items.length + ' İlan)';
-
-      items.forEach((item, idx) => {
-        const lat = item.lat || (39.0 + (idx % 5) * 0.05);
-        const lng = item.lng || (35.0 + (idx % 5) * 0.05);
-
-        let pinColor = '#10B981';
-        let pinShadow = 'rgba(16,185,129,0.5)';
-        if (item.category === 'automotive') {
-          pinColor = '#38BDF8';
-          pinShadow = 'rgba(56,189,248,0.5)';
-        } else if (item.category === 'realestate') {
-          pinColor = '#F97316';
-          pinShadow = 'rgba(249,115,22,0.5)';
-        }
-
-        const iconHtml = `
-          <div style="background:#10141A; border:2px solid ${pinColor}; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px ${pinShadow}; font-size:14px; cursor:pointer;">
-            ${item.categoryIcon || '📦'}
-          </div>
-        `;
-        const customIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
-
-        const market = (item.marketPrice || 0).toLocaleString('tr-TR');
-        const offer = (item.offerPrice || 0).toLocaleString('tr-TR');
-        const profit = (item.estimatedProfit || 0).toLocaleString('tr-TR');
-
-        const popupContent = `
-          <div class="text-xs font-sans space-y-1.5 p-1">
-            <div class="font-bold text-white leading-tight line-clamp-2">${item.title}</div>
-            <div class="text-[11px] font-mono font-semibold" style="color:${pinColor};">📍 ${item.city || 'TR'} / ${item.district || 'Merkez'}</div>
-            <div class="border-t border-white/10 pt-1 font-mono text-[11px] space-y-0.5">
-              <div class="text-neutral-400 line-through">Rayiç/Piyasa: ₺${market}</div>
-              <div class="text-white font-bold">Teklif/Fırsat: ₺${offer}</div>
-              <div class="text-emerald-400 font-semibold">+₺${profit} Marj</div>
-            </div>
-            <div class="flex items-center gap-1.5 pt-1.5">
-              <button onclick="focusCard('${item.id}')" class="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white font-medium py-1 px-2 rounded text-[11px] transition text-center">Listede Gör ↓</button>
-              <a href="${item.sourceUrl || '#'}" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1 px-2 rounded text-[11px] transition text-center">İlana Git ↗</a>
-            </div>
-          </div>
-        `;
-
-        L.marker([lat, lng], { icon: customIcon }).bindPopup(popupContent).addTo(markersLayer);
+      items.forEach((it, idx) => {
+        let lat = Number(it.lat) || (39.0 + (idx % 8) * 0.05);
+        let lng = Number(it.lng) || (35.0 + (idx % 8) * 0.05);
+        let color = it.category === 'automotive' ? '#38bdf8' : (it.category === 'realestate' ? '#f97316' : '#10b981');
+        const iconHtml = `<div style="background:#10141A; border:2px solid ${color}; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:12px;">${it.categoryIcon || '📦'}</div>`;
+        const cIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+        
+        const popup = `<div style="font-size:12px;"><b>${it.title || 'İlan'}</b><br><span style="color:${color}">${it.city || 'TR'}</span><br>Fırsat: ₺${Number(it.offerPrice||0).toLocaleString('tr-TR')}<br><a href="${it.sourceUrl || '#'}" target="_blank" style="color:#10b981; font-weight:bold;">İlana Git ↗</a></div>`;
+        L.marker([lat, lng], { icon: cIcon }).bindPopup(popup).addTo(markersLayer);
       });
-    }
-
-    function exportToCSV() {
-      const activeList = getFilteredList();
-      if (!activeList || activeList.length === 0) {
-        alert("İndirilecek ilan bulunamadı.");
-        return;
-      }
-
-      const headers = ["Esas / Dosya No", "Kategori", "Kanal", "İlan Başlığı", "Şehir", "Merci / Kurum", "Rayiç Bedel (TL)", "Fırsat Fiyatı (TL)", "Net Marj (TL)", "Kalan Gün", "Resmi Link"];
-      const rows = activeList.map(item => [
-        `"${(item.docketNo || item.id || '').replace(/"/g, '""')}"`,
-        `"${(item.categoryName || item.category || '').replace(/"/g, '""')}"`,
-        `"${(item.channel || 'icra').toUpperCase()}"`,
-        `"${(item.title || '').replace(/"/g, '""')}"`,
-        `"${(item.city || 'Türkiye').replace(/"/g, '""')}"`,
-        `"${(item.district || item.source || '').replace(/"/g, '""')}"`,
-        item.marketPrice || 0,
-        item.offerPrice || 0,
-        item.estimatedProfit || 0,
-        getRemainingDays(item.added_ts),
-        `"${item.sourceUrl || ''}"`
-      ]);
-
-      const csvContent = "﻿" + [headers.join(";"), ...rows.map(r => r.join(";"))].join("
-");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Alpha_Radar_Portfoy_${currentCity}_${new Date().toISOString().slice(0,10)}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    function getRejected() {
-      try { return JSON.parse(localStorage.getItem('alpha_rej') || '[]'); }
-      catch(e) { return []; }
-    }
-
-    function rejectItem(id) {
-      const arr = getRejected();
-      if (!arr.includes(id)) {
-        arr.push(id);
-        localStorage.setItem('alpha_rej', JSON.stringify(arr));
-      }
-      render();
-    }
-
-    function resetRejected() {
-      if (confirm('Pas geçtiğin tüm ilanları listeye geri döndürmek istiyor musun?')) {
-        localStorage.removeItem('alpha_rej');
-        render();
-      }
-    }
-
-    function getRemainingDays(addedTs) { if(!addedTs) return 14;
-      const now = Math.floor(Date.now() / 1000);
-      const ts = addedTs || now;
-      const elapsed = now - ts;
-      const leftSec = Math.max(0, TTL_SECONDS - elapsed);
-      return Math.ceil(leftSec / 86400);
-    }
-
-    function shareWhatsApp(title, city, market, offer, profit, url, docket) {
-      const msg = 
-        `🚨 *ALPHA RADAR FIRSAT BİLDİRİMİ*\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `📑 *Dosya/Kayıt:* ${docket}\n` +
-        `📍 *Konum:* ${city}\n` +
-        `🏷️ *İlan:* ${title}\n` +
-        `📊 *Rayiç/Piyasa:* ₺${market}\n` +
-        `💰 *Fırsat Fiyatı:* ₺${offer}\n` +
-        `⚡ *Tahmini Net Marj:* +₺${profit}\n` +
-        `🔗 *Doğrudan İlan Linki:* ${url}\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `Alpha Radar Otonom İstihbarat`;
-      
-      const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
-      window.open(shareUrl, '_blank');
     }
 
     function setCategory(cat) {
       currentCategory = cat;
-      ['all', 'expiring_soon', 'automotive', 'land', 'realestate'].forEach(c => {
+      ['all', 'automotive', 'land', 'realestate'].forEach(c => {
         const el = document.getElementById('btn-' + c);
-        if (!el) return;
-        if (c === cat) {
-          el.className = 'px-2.5 py-1 rounded text-xs font-medium bg-neutral-800 text-white';
-        } else {
-          const defaultColor = c === 'expiring_soon' ? 'text-amber-400' : 'text-neutral-400';
-          el.className = `px-2.5 py-1 rounded text-xs font-medium ${defaultColor} hover:text-white transition`;
-        }
+        if (el) el.className = c === cat ? 'px-2 py-0.5 rounded text-xs bg-neutral-800 text-white' : 'px-2 py-0.5 rounded text-xs text-neutral-400';
       });
       render();
     }
 
-    function setCity(city) {
-      currentCity = city;
-      ['all', 'Adana', 'Samsun', 'Mersin', 'Ankara'].forEach(c => {
-        const el = document.getElementById('city-' + c);
-        if (!el) return;
-        if (c === city) {
-          el.className = 'px-2.5 py-1 rounded text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 transition font-semibold';
-        } else {
-          el.className = 'px-2.5 py-1 rounded text-xs text-neutral-400 hover:text-white border border-white/5 hover:border-white/20 transition';
+    function render() {
+      const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+      const chan = document.getElementById('channelFilter')?.value || 'all';
+
+      let list = pool.filter(it => {
+        if (!it) return false;
+        if (currentCategory !== 'all' && it.category !== currentCategory) return false;
+        if (chan !== 'all' && (it.channel || 'icra') !== chan) return false;
+        if (q) {
+          const t = `${it.title || ''} ${it.city || ''} ${it.district || ''} ${it.docketNo || ''}`.toLowerCase();
+          if (!t.includes(q)) return false;
         }
+        return true;
       });
-      render();
-    }
 
-        async function loadData() {
-      const syncEl = document.getElementById("statSync");
-      if (syncEl) syncEl.innerText = "Yenileniyor...";
+      document.getElementById('statTotal').innerText = pool.length;
+      document.getElementById('statVisible').innerText = list.length;
+      updateMarkers(list);
 
-      const sources = [
-        "/data.json?t=" + Date.now(),
-        "https://raw.githubusercontent.com/batuhanturgut55/alpha-radar/main/data.json?t=" + Date.now()
-      ];
-
-      let loadedData = null;
-      for (const src of sources) {
-        try {
-          const res = await fetch(src, { cache: "no-store" });
-          if (res.ok) {
-            const json = await res.json();
-            if (Array.isArray(json)) {
-              loadedData = json;
-              break;
-            }
-          }
-        } catch (e) {
-          console.warn("Kaynak denenemedi (" + src + "):", e);
-        }
+      const cont = document.getElementById('feedContainer');
+      if (!list.length) {
+        cont.innerHTML = '<div class="text-center text-xs text-neutral-500 py-12 font-mono">Eşleşen ilan bulunamadı.</div>';
+        return;
       }
 
-      if (loadedData) {
-        pool = loadedData;
-        if (syncEl) syncEl.innerText = new Date().toLocaleTimeString("tr-TR");
+      cont.innerHTML = list.map(it => {
+        const market = Number(it.marketPrice || 0).toLocaleString('tr-TR');
+        const offer = Number(it.offerPrice || 0).toLocaleString('tr-TR');
+        const profit = Number(it.estimatedProfit || 0).toLocaleString('tr-TR');
+        return `
+          <div class="item-card rounded-lg p-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+            <div class="flex items-start gap-3 flex-1 min-w-0">
+              <div class="w-9 h-9 rounded bg-neutral-900 border border-white/10 flex items-center justify-center text-base shrink-0">${it.categoryIcon || '📦'}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1 text-[11px] font-mono">
+                  <span class="text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 rounded">${it.badge || 'FIRSAT'}</span>
+                  <span class="text-neutral-500">${it.docketNo || it.id || ''}</span>
+                  <span class="text-neutral-400 font-bold">${it.city || 'TR'} / ${it.district || 'Merkez'}</span>
+                </div>
+                <h2 class="text-sm font-semibold text-white truncate"><a href="${it.sourceUrl || '#'}" target="_blank" class="hover:text-emerald-400">${it.title || 'İlan'}</a></h2>
+                <p class="text-xs text-neutral-400 truncate">${it.aiAnalysis || 'Açık ihale / serbest piyasa kaydı.'}</p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto font-mono shrink-0">
+              <div class="text-left md:text-right">
+                <div class="text-[10px] text-neutral-500 line-through">₺${market}</div>
+                <div class="text-sm font-bold text-white">₺${offer}</div>
+                <div class="text-[10px] text-emerald-400 font-semibold">+₺${profit} Marj</div>
+              </div>
+              <a href="${it.sourceUrl || '#'}" target="_blank" class="bg-white hover:bg-neutral-200 text-neutral-900 font-semibold text-xs px-3 py-1.5 rounded">İlana Git ↗</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadData() {
+      const sync = document.getElementById('statSync');
+      if (sync) sync.innerText = 'Yükleniyor...';
+      try {
+        const res = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        pool = await res.json();
+        if (sync) sync.innerText = 'Canlı (' + pool.length + ' İlan)';
         render();
-      } else {
-        if (syncEl) syncEl.innerText = "Veri Alınamadı";
+      } catch(e) {
+        if (sync) sync.innerText = 'Yükleme Hatası';
+        console.error(e);
       }
     }
 
+    initMap();
     loadData();
-    setInterval(loadData, 20000);
+    setInterval(loadData, 25000);
   </script>
 </body>
 </html>
