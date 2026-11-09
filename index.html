@@ -424,200 +424,34 @@
 
     async function loadData() {
       try {
-        document.getElementById('statSync').innerText = 'Senkronize ediliyor...';
-        const res = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        pool = await res.json();
+        document.getElementById('statSync').innerText = 'Canlı taranıyor...';
+        // GitHub API doğrudan son commit halini 0 gecikmeyle verir
+        const apiUri = "https://api.github.com/repos/batuhanturgut55/alpha-radar/contents/data.json?ref=main&t=" + Date.now();
+        const res = await fetch(apiUri, { headers: { "Accept": "application/vnd.github.v3+json" } });
+        if (!res.ok) throw new Error("API " + res.status);
+        const dataJson = await res.json();
+        const binaryString = atob(dataJson.content);
+        const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+        const decoded = new TextDecoder("utf-8").decode(bytes);
+        pool = JSON.parse(decoded);
         document.getElementById('statSync').innerText = new Date().toLocaleTimeString('tr-TR');
         render();
       } catch (e) {
-        document.getElementById('statSync').innerText = 'Bağlantı Hatası';
+        console.error("Yükleme hatası:", e);
+        // Fallback: Doğrudan raw denemesi
+        try {
+          const fb = await fetch("https://raw.githubusercontent.com/batuhanturgut55/alpha-radar/main/data.json?t=" + Date.now());
+          pool = await fb.json();
+          document.getElementById('statSync').innerText = new Date().toLocaleTimeString('tr-TR');
+          render();
+        } catch(err) {
+          document.getElementById('statSync').innerText = 'Bağlantı Hatası';
+        }
       }
     }
 
-    function getFilteredList() {
-      const rej = getRejected();
-      const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
-      const sortType = document.getElementById('sortSelect')?.value || 'newest';
-      const priceFilter = document.getElementById('priceFilter')?.value || 'all';
-      const channelFilter = document.getElementById('channelFilter')?.value || 'all';
-
-      let list = Array.isArray(pool) ? pool.filter(item => !rej.includes(item.id)) : [];
-
-      if (currentCity !== 'all') {
-        list = list.filter(item => {
-          const c = (item.city || '').toLowerCase();
-          const d = (item.district || '').toLowerCase();
-          const t = (item.title || '').toLowerCase();
-          const target = currentCity.toLowerCase();
-          return c.includes(target) || d.includes(target) || t.includes(target);
-        });
-      }
-
-      if (currentCategory === 'expiring_soon') {
-        list = list.filter(item => getRemainingDays(item.added_ts) <= 2);
-      } else if (currentCategory !== 'all') {
-        list = list.filter(item => item.category === currentCategory);
-      }
-
-      // Kanal Filtresi (İcra / Piyasa)
-      if (channelFilter !== 'all') {
-        list = list.filter(item => (item.channel || 'icra') === channelFilter);
-      }
-
-      if (priceFilter !== 'all') {
-        list = list.filter(item => {
-          const price = item.offerPrice || 0;
-          if (priceFilter === '0-500k') return price <= 500000;
-          if (priceFilter === '500k-1.5m') return price > 500000 && price <= 1500000;
-          if (priceFilter === '1.5m-5m') return price > 1500000 && price <= 5000000;
-          if (priceFilter === '5m+') return price > 5000000;
-          return true;
-        });
-      }
-
-      if (q) {
-        list = list.filter(item => 
-          (item.title || '').toLowerCase().includes(q) ||
-          (item.city || '').toLowerCase().includes(q) ||
-          (item.district || '').toLowerCase().includes(q) ||
-          (item.source || '').toLowerCase().includes(q) ||
-          (item.docketNo || '').toLowerCase().includes(q)
-        );
-      }
-
-      if (sortType === 'profit') {
-        list.sort((a, b) => (b.estimatedProfit || 0) - (a.estimatedProfit || 0));
-      } else if (sortType === 'expiring') {
-        list.sort((a, b) => getRemainingDays(a.added_ts) - getRemainingDays(b.added_ts));
-      } else if (sortType === 'price_asc') {
-        list.sort((a, b) => (a.offerPrice || 0) - (b.offerPrice || 0));
-      } else if (sortType === 'price_desc') {
-        list.sort((a, b) => (b.offerPrice || 0) - (a.offerPrice || 0));
-      }
-
-      return list;
-    }
-
-    function render() {
-      const rej = getRejected();
-      document.getElementById('passCount').innerText = rej.length;
-
-      const list = getFilteredList();
-
-      document.getElementById('statTotal').innerText = pool.length;
-      document.getElementById('statVisible').innerText = list.length;
-      document.getElementById('statCityCount').innerText = list.length;
-
-      const totalPortfolio = list.reduce((acc, it) => acc + (it.marketPrice || 0), 0);
-      const totalProfit = list.reduce((acc, it) => acc + (it.estimatedProfit || 0), 0);
-      document.getElementById('statPortfolio').innerText = '₺' + totalPortfolio.toLocaleString('tr-TR');
-      document.getElementById('statProfit').innerText = '₺' + totalProfit.toLocaleString('tr-TR');
-
-      updateMapPoints(list);
-
-      const container = document.getElementById('feedContainer');
-
-      if (list.length === 0) {
-        container.innerHTML = `
-          <div class="py-16 text-center border border-white/5 rounded-lg bg-panel p-6">
-            <p class="text-sm font-semibold text-white mb-1">Seçilen Kriterde İlan Bulunamadı</p>
-            <p class="text-xs text-neutral-500 mb-4">Kaynak veya şehir filtresini genişleterek arama yapabilirsiniz.</p>
-            <button onclick="document.getElementById('channelFilter').value='all'; setCity('all'); setCategory('all'); render();" class="text-xs px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white border border-white/10 transition">Tüm İlanları Göster</button>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = list.map(item => {
-        const isOfficial = (item.badge || '').includes('İCRA') || (item.badge || '').includes('KAMU');
-        const badgeStyle = isOfficial 
-          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
-          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-
-        const categoryIcon = item.categoryIcon || (item.category === 'automotive' ? '🚗' : item.category === 'land' ? '🌾' : '🏢');
-
-        const remDays = getRemainingDays(item.added_ts);
-        const remStyle = remDays <= 2 
-          ? 'bg-red-500/10 text-red-400 border-red-500/30 animate-pulse font-bold' 
-          : 'bg-neutral-900 text-neutral-400 border-white/10';
-
-        const market = (item.marketPrice || 0).toLocaleString('tr-TR');
-        const offer = (item.offerPrice || 0).toLocaleString('tr-TR');
-        const profit = (item.estimatedProfit || 0).toLocaleString('tr-TR');
-        const docket = item.docketNo || item.id;
-        const cleanTitle = (item.title || '').replace(/'/g, "\'");
-        const cleanCity = (item.city || 'Türkiye').replace(/'/g, "\'");
-
-        return `
-          <div id="card-${item.id}" class="item-card bg-panel border border-borderSubtle rounded-xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div class="flex items-start gap-3.5 flex-1 min-w-0">
-              <div class="w-10 h-10 rounded-lg bg-neutral-900 border border-white/10 flex items-center justify-center text-lg shrink-0 select-none shadow-sm mt-0.5">
-                ${categoryIcon}
-              </div>
-
-              <div class="flex-1 min-w-0">
-                <div class="flex flex-wrap items-center gap-2 mb-1.5 text-xs">
-                  <span class="px-2 py-0.5 rounded border ${badgeStyle} font-mono font-medium text-[11px]">
-                    ${item.badge || 'FIRSAT'}
-                  </span>
-                  <span class="px-2 py-0.5 rounded border border-white/10 bg-neutral-900/60 font-mono text-[10px] text-neutral-400 uppercase">
-                    ${item.channel === 'piyasa' ? '🛒 Serbest Piyasa' : '⚖️ Resmi İcra/Kamu'}
-                  </span>
-                  <span class="px-2 py-0.5 rounded border ${remStyle} font-mono text-[11px]">
-                    ⏳ ${remDays} Gün Kaldı
-                  </span>
-                  <span class="text-neutral-500 font-mono text-[11px]">${docket}</span>
-                  <span class="text-neutral-600">•</span>
-                  <span class="text-emerald-400 font-semibold">${item.city || 'Türkiye'}</span>
-                  <span class="text-neutral-500">/ ${item.district || item.source || 'Resmi'}</span>
-                </div>
-
-                <h2 class="text-sm md:text-base font-semibold text-white leading-snug line-clamp-2 mb-1 hover:text-emerald-400 transition">
-                  <a href="${item.sourceUrl || '#'}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-                </h2>
-
-                <p class="text-xs text-neutral-400 line-clamp-1">
-                  ${item.aiAnalysis || 'Doğrulanmış açık veri kaydı.'}
-                </p>
-              </div>
-            </div>
-
-            <!-- Fiyat ve İşlemler -->
-            <div class="flex items-center justify-between md:justify-end gap-5 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-white/5 font-mono shrink-0">
-              <div class="text-left md:text-right">
-                <div class="text-[11px] text-neutral-500 line-through">₺${market}</div>
-                <div class="text-base font-bold text-white">₺${offer}</div>
-                <div class="text-[11px] text-emerald-400 font-semibold">+₺${profit} Marj</div>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <button onclick="shareWhatsApp('${cleanTitle}', '${cleanCity}', '${market}', '${offer}', '${profit}', '${item.sourceUrl || ''}', '${docket}')" 
-                        title="İlanı WhatsApp ile Paylaş"
-                        class="px-2.5 py-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-800/60 text-emerald-400 text-xs font-medium transition flex items-center gap-1">
-                  <span>💬</span>
-                  <span class="hidden sm:inline">Paylaş</span>
-                </button>
-
-                <a href="${item.sourceUrl || '#'}" target="_blank" rel="noopener noreferrer" 
-                   class="px-3.5 py-2 rounded-lg bg-white hover:bg-neutral-200 text-neutral-900 font-semibold text-xs transition shadow-sm">
-                  İlana Git ↗
-                </a>
-
-                <button onclick="rejectItem('${item.id}')" title="Listeden kaldır"
-                        class="px-2.5 py-2 rounded-lg border border-white/10 hover:border-red-500/40 hover:text-red-400 text-neutral-400 text-xs transition">
-                  ✕
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    initMap();
     loadData();
-    setInterval(loadData, 30000);
+    setInterval(loadData, 20000);
   </script>
 </body>
 </html>
