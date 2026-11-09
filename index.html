@@ -1,377 +1,348 @@
 <!DOCTYPE html>
-<html lang="tr" class="dark">
+<html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALPHA RADAR — Finansal İstihbarat & Varlık Terminali</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>ALPHA RADAR — Kurumsal Finansal İstihbarat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: "class",
       theme: {
         extend: {
           fontFamily: {
-            sans: ["Inter", "sans-serif"],
-            mono: ["JetBrains Mono", "monospace"]
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"Space Grotesk"', 'monospace']
           },
           colors: {
-            surface: { 900: "#090d16", 800: "#0f172a", 700: "#1e293b", 600: "#334155" },
-            brand: { 500: "#10b981", 600: "#059669", 400: "#34d399" }
+            canvas: '#090B0E',
+            panel: '#10141A',
+            panelHover: '#141A23',
+            borderSubtle: 'rgba(255, 255, 255, 0.06)',
+            accent: '#10B981'
           }
         }
       }
     }
   </script>
   <style>
-    body { font-feature-settings: "cv02", "cv03", "cv04", "cv11"; }
-    .dark body { background-color: #06090f; color: #f1f5f9; }
-    html:not(.dark) body { background-color: #f8fafc; color: #0f172a; }
-
-    .dark .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.07); }
-    html:not(.dark) .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-
-    .dark .ad-card { border: 1px solid rgba(255, 255, 255, 0.08); background: #0c121e; }
-    html:not(.dark) .ad-card { border: 1px solid rgba(0, 0, 0, 0.08); background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
-
-    .ad-card { transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1); }
-    .dark .ad-card:hover { transform: translateY(-3px); border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.7); }
-    html:not(.dark) .ad-card:hover { transform: translateY(-3px); border-color: rgba(16, 185, 129, 0.5); box-shadow: 0 14px 28px -10px rgba(16, 185, 129, 0.15); }
-
-    .tag-badge { font-family: "JetBrains Mono", monospace; font-size: 10.5px; letter-spacing: -0.01em; }
-    .barcode-font { font-family: "JetBrains Mono", monospace; letter-spacing: 0.1em; }
+    body { background-color: #090B0E; color: #E5E7EB; -webkit-font-smoothing: antialiased; }
+    .item-card { transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease; }
+    .item-card:hover { border-color: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
   </style>
 </head>
-<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500/20 selection:text-brand-400">
+<body class="min-h-screen flex flex-col font-sans">
 
-  <!-- Üst Borsa & Canlı Durum Bandı -->
-  <div class="border-b border-white/5 dark:bg-surface-900/90 bg-slate-100 text-xs py-2 px-4 md:px-8 flex justify-between items-center text-slate-500 font-mono transition-colors">
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-2">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <span class="dark:text-slate-200 text-slate-800 font-semibold tracking-wide">ALPHA FEED v6.5 PRO</span>
-      </div>
-      <span class="hidden md:inline text-slate-400">|</span>
-      <span class="hidden md:inline">TARAMA AĞI: <span class="dark:text-slate-200 text-slate-700 font-medium">UYAP İCRA, KAMU İHALE, SAHİBİNDEN, ARABAM, EMLAKJET</span></span>
-    </div>
-    <div class="flex items-center gap-4">
-      <span>SON SENKRON: <span id="tickerTime" class="dark:text-slate-200 text-slate-800 font-semibold">Bağlanıyor...</span></span>
-      <span class="text-slate-400">|</span>
-      <span class="text-brand-500 font-medium">9 SLOT VİTRİN</span>
-    </div>
-  </div>
-
-  <!-- Ana Navigasyon -->
-  <header class="border-b border-white/5 glass-panel sticky top-0 z-40 transition-colors">
-    <div class="max-w-7xl mx-auto px-4 md:px-8 py-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+  <!-- Üst İstihbarat Barı -->
+  <header class="border-b border-white/[0.06] bg-canvas/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div class="flex items-center gap-3">
-        <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-bold text-white shadow-lg shadow-emerald-900/30">
+        <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono font-bold text-base shadow-sm">
           α
         </div>
         <div>
-          <h1 class="text-lg font-bold dark:text-white text-slate-900 tracking-tight flex items-center gap-2">
-            ALPHA RADAR <span class="text-[10px] text-slate-400 font-mono font-normal border border-slate-700 px-1.5 py-0.5 rounded dark:bg-slate-800/80 bg-slate-200">TERMINAL</span>
-          </h1>
-          <p class="text-xs text-slate-400">Kurumsal Fırsat, İhale & Kelepir İstihbaratı</p>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm font-bold tracking-tight text-white uppercase">Alpha Radar</h1>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-[11px] font-mono text-emerald-400 font-semibold">CANLI İSTİHBARAT</span>
+          </div>
+          <p class="text-xs text-neutral-400">UYAP İcra, Kamu/Belediye, Sahibinden, Arabam ve Emlakjet Fırsatları</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2.5 w-full md:w-auto">
-        <div class="relative flex-1 md:w-64">
-          <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Şehir, marka veya esas no..." 
-                 class="w-full dark:bg-slate-900/90 bg-slate-100 border dark:border-slate-700/80 border-slate-300 rounded-lg px-3 py-1.5 text-xs dark:text-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 transition">
+      <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+        <!-- Arama Kutusu -->
+        <div class="relative flex-1 md:w-52">
+          <input type="text" id="searchInput" oninput="render()" placeholder="Şehir, marka veya merci..." 
+                 class="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 transition">
         </div>
 
-        <button onclick="toggleTheme()" id="themeBtn" title="Temayı Değiştir"
-                class="p-2 rounded-lg border dark:border-slate-700 border-slate-300 dark:bg-slate-800/60 bg-white text-slate-400 hover:text-slate-200 transition">
-          <span id="themeIcon">☀️</span>
-        </button>
+        <!-- Fiyat Aralığı Filtresi -->
+        <select id="priceFilter" onchange="render()" class="bg-neutral-900 border border-white/10 text-neutral-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 transition font-mono">
+          <option value="all">💵 Tüm Fiyatlar</option>
+          <option value="0-500k">₺0 - ₺500.000</option>
+          <option value="500k-1.5m">₺500.000 - ₺1.5M</option>
+          <option value="1.5m-5m">₺1.5M - ₺5M</option>
+          <option value="5m+">₺5.000.000+</option>
+        </select>
+        
+        <!-- Sıralama Seçici -->
+        <select id="sortSelect" onchange="render()" class="bg-neutral-900 border border-white/10 text-neutral-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 transition font-mono">
+          <option value="newest">🕒 En Yeni</option>
+          <option value="profit">💰 En Yüksek Marj</option>
+          <option value="price_asc">📉 En Düşük Fiyat</option>
+          <option value="price_desc">📈 En Yüksek Fiyat</option>
+        </select>
 
-        <button onclick="resetPassList()" class="text-xs text-slate-400 hover:text-slate-200 border dark:border-slate-700/70 border-slate-300 px-3 py-1.5 rounded-lg transition whitespace-nowrap dark:bg-slate-800/50 bg-white">
-          Pas (<span id="passCount" class="font-mono font-bold">0</span>)
+        <button onclick="resetRejected()" class="text-xs border border-white/10 hover:border-white/25 text-neutral-300 px-3 py-1.5 rounded-lg transition">
+          Pas (<span id="passCount" class="font-mono text-emerald-400">0</span>)
         </button>
-        <button onclick="fetchPool()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-1.5 rounded-lg transition shadow-md shadow-emerald-950 flex items-center gap-1.5">
-          <span>Yenile</span>
+        <button onclick="loadData()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-lg transition shadow-sm">
+          Yenile
         </button>
       </div>
     </div>
   </header>
 
-  <!-- İstatistik Barı & Filtre Sekmeleri -->
-  <section class="max-w-7xl mx-auto px-4 md:px-8 pt-6 pb-3 w-full">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-      <div class="glass-panel p-4 rounded-xl">
-        <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1">VİTRİN / HAVUZ</span>
-        <div class="flex items-baseline gap-2">
-          <span id="metricVisible" class="text-xl font-bold font-mono dark:text-white text-slate-900">0</span>
-          <span class="text-xs text-slate-400 font-mono">/ <span id="metricTotal">0</span> İlan</span>
+  <!-- Özet Metrik ve Kategori Şeridi -->
+  <div class="border-b border-white/[0.04] bg-neutral-950/40">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
+      <div class="flex items-center gap-6">
+        <div>
+          <span class="text-neutral-500">HAVUZDAKİ İLAN:</span>
+          <span id="statTotal" class="text-white font-bold ml-1">0</span>
+        </div>
+        <div>
+          <span class="text-neutral-500">LİSTELENEN:</span>
+          <span id="statVisible" class="text-emerald-400 font-bold ml-1">0</span>
+        </div>
+        <div class="hidden sm:block">
+          <span class="text-neutral-500">TOPLAM MARJ:</span>
+          <span id="statProfit" class="text-emerald-400 font-bold ml-1">₺0</span>
+        </div>
+        <div class="hidden md:block">
+          <span class="text-neutral-500">SENKRON:</span>
+          <span id="statSync" class="text-neutral-300 ml-1">--:--:--</span>
         </div>
       </div>
-      <div class="glass-panel p-4 rounded-xl">
-        <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1">TOPLAM NET MARJ</span>
-        <div id="metricProfit" class="text-xl font-bold font-mono text-emerald-500">₺0</div>
-      </div>
-      <div class="glass-panel p-4 rounded-xl">
-        <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1">ORTALAMA İSKONTO</span>
-        <div id="metricDiscount" class="text-xl font-bold font-mono text-blue-500">%49.0 TABAN</div>
-      </div>
-      <div class="glass-panel p-4 rounded-xl">
-        <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1">İSTİHBARAT RADARI</span>
-        <div class="text-sm font-semibold dark:text-slate-200 text-slate-800 mt-1 flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 5 Portal Aktif
-        </div>
+
+      <!-- Kategori Butonları -->
+      <div class="flex items-center gap-1">
+        <button onclick="setCategory('all')" id="btn-all" class="px-2.5 py-1 rounded text-xs font-medium bg-neutral-800 text-white">Tümü</button>
+        <button onclick="setCategory('automotive')" id="btn-automotive" class="px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition">🚗 Vasıta</button>
+        <button onclick="setCategory('land')" id="btn-land" class="px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition">🌾 Tarla/Arsa</button>
+        <button onclick="setCategory('realestate')" id="btn-realestate" class="px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition">🏢 Gayrimenkul</button>
       </div>
     </div>
+  </div>
 
-    <!-- Kategori Butonları -->
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-4">
-      <div class="flex items-center gap-1.5 p-1 dark:bg-slate-900/80 bg-slate-200 rounded-lg border dark:border-slate-800 border-slate-300 text-xs font-medium">
-        <button onclick="setCategory('all')" id="cat-all" class="cat-btn px-3 py-1.5 rounded-md dark:text-white text-slate-900 dark:bg-slate-800 bg-white shadow">Tümü (9 Slot)</button>
-        <button onclick="setCategory('automotive')" id="cat-automotive" class="cat-btn px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white transition">🚗 Vasıta</button>
-        <button onclick="setCategory('land')" id="cat-land" class="cat-btn px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white transition">🌾 Tarla / Arsa</button>
-        <button onclick="setCategory('realestate')" id="cat-realestate" class="cat-btn px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white transition">🏢 Gayrimenkul</button>
-      </div>
-      <div class="text-xs text-slate-400 font-mono">
-        YEDEK HAVUZDA: <span id="metricQueue" class="text-emerald-500 font-bold">0</span> İLAN
-      </div>
-    </div>
-  </section>
-
-  <!-- 9 Slotluk İlan Vitrini -->
-  <main class="max-w-7xl mx-auto px-4 md:px-8 py-3 flex-1 w-full">
-    <div id="cardGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      <div class="col-span-full py-24 text-center">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent mb-3"></div>
-        <p class="text-xs font-mono text-slate-400">9 Slotluk İstihbarat Havuzu Senkronize Ediliyor...</p>
+  <!-- Ana İlan Akışı -->
+  <main class="max-w-6xl mx-auto px-4 md:px-6 py-6 flex-1 w-full">
+    <div id="feedContainer" class="space-y-3">
+      <div class="py-20 text-center text-xs text-neutral-500 font-mono">
+        İstihbarat havuzu taranıyor...
       </div>
     </div>
   </main>
 
-  <footer class="border-t border-white/5 py-6 mt-12 dark:bg-surface-900/50 bg-slate-100 transition-colors">
-    <div class="max-w-7xl mx-auto px-4 md:px-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500 font-mono">
-      <span>ALPHA RADAR • 9 Slot Otonom Finansal Terminal</span>
-      <span>Resmi UYAP Barkod & Piyasa Doğrulama Motoru</span>
-    </div>
+  <footer class="border-t border-white/[0.04] py-6 text-center text-xs text-neutral-600 font-mono">
+    Alpha Radar • Kurumsal Otonom İstihbarat Platformu
   </footer>
 
   <script>
     const DATA_URL = "https://raw.githubusercontent.com/batuhanturgut55/alpha-radar/main/data.json";
-    const VISIBLE_COUNT = 9;
-    let rawPool = [];
-    let currentCategory = "all";
+    let pool = [];
+    let currentCategory = 'all';
 
-    function initTheme() {
-      const saved = localStorage.getItem("alpha_theme") || "dark";
-      if (saved === "light") {
-        document.documentElement.classList.remove("dark");
-        document.getElementById("themeIcon").innerText = "🌙";
-      } else {
-        document.documentElement.classList.add("dark");
-        document.getElementById("themeIcon").innerText = "☀️";
+    function getRejected() {
+      try { return JSON.parse(localStorage.getItem('alpha_rej') || '[]'); }
+      catch(e) { return []; }
+    }
+
+    function rejectItem(id) {
+      const arr = getRejected();
+      if (!arr.includes(id)) {
+        arr.push(id);
+        localStorage.setItem('alpha_rej', JSON.stringify(arr));
+      }
+      render();
+    }
+
+    function resetRejected() {
+      if (confirm('Pas geçtiğin tüm ilanları listeye geri döndürmek istiyor musun?')) {
+        localStorage.removeItem('alpha_rej');
+        render();
       }
     }
 
-    function toggleTheme() {
-      const isDark = document.documentElement.classList.contains("dark");
-      if (isDark) {
-        document.documentElement.classList.remove("dark");
-        localStorage.setItem("alpha_theme", "light");
-        document.getElementById("themeIcon").innerText = "🌙";
-      } else {
-        document.documentElement.classList.add("dark");
-        localStorage.setItem("alpha_theme", "dark");
-        document.getElementById("themeIcon").innerText = "☀️";
-      }
-    }
-
-    function getPassed() {
-      try {
-        return JSON.parse(localStorage.getItem("alpha_passed_ads") || "[]");
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function savePassed(arr) {
-      localStorage.setItem("alpha_passed_ads", JSON.stringify(arr));
-      document.getElementById("passCount").innerText = arr.length;
-    }
-
-    function passItem(id) {
-      const p = getPassed();
-      if (!p.includes(id)) {
-        p.push(id);
-        savePassed(p);
-      }
-      renderCards();
-    }
-
-    function resetPassList() {
-      if (confirm("Pas geçtiğin tüm ilanları vitrine geri döndürmek istiyor musun?")) {
-        localStorage.removeItem("alpha_passed_ads");
-        savePassed([]);
-        renderCards();
-      }
+    function shareWhatsApp(title, city, market, offer, profit, url, docket) {
+      const msg = 
+        `🚨 *ALPHA RADAR FIRSAT BİLDİRİMİ*\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `📑 *Dosya:* ${docket}\n` +
+        `📍 *Konum:* ${city}\n` +
+        `🏷️ *İlan:* ${title}\n` +
+        `📊 *Rayiç Bedel:* ₺${market}\n` +
+        `💰 *Fırsat Fiyatı:* ₺${offer}\n` +
+        `⚡ *Tahmini Net Marj:* +₺${profit}\n` +
+        `🔗 *Resmi Bağlantı:* ${url}\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `Alpha Radar Otonom İstihbarat`;
+      
+      const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+      window.open(shareUrl, '_blank');
     }
 
     function setCategory(cat) {
       currentCategory = cat;
-      document.querySelectorAll(".cat-btn").forEach(btn => {
-        btn.classList.remove("dark:text-white", "text-slate-900", "dark:bg-slate-800", "bg-white", "shadow");
-        btn.classList.add("text-slate-500");
+      ['all', 'automotive', 'land', 'realestate'].forEach(c => {
+        const el = document.getElementById('btn-' + c);
+        if (c === cat) {
+          el.className = 'px-2.5 py-1 rounded text-xs font-medium bg-neutral-800 text-white';
+        } else {
+          el.className = 'px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition';
+        }
       });
-      const activeBtn = document.getElementById("cat-" + cat);
-      if (activeBtn) {
-        activeBtn.classList.remove("text-slate-500");
-        activeBtn.classList.add("dark:text-white", "text-slate-900", "dark:bg-slate-800", "bg-white", "shadow");
-      }
-      renderCards();
+      render();
     }
 
-    function applyFilters() {
-      renderCards();
-    }
-
-    async function fetchPool() {
+    async function loadData() {
       try {
-        document.getElementById("tickerTime").innerText = "Taranıyor...";
-        const res = await fetch(DATA_URL + "?_ts=" + Date.now(), { cache: "no-store" });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        rawPool = await res.json();
-        document.getElementById("tickerTime").innerText = new Date().toLocaleTimeString("tr-TR");
-        renderCards();
-      } catch (err) {
-        console.error(err);
-        document.getElementById("tickerTime").innerText = "Bağlantı Hatası";
+        document.getElementById('statSync').innerText = 'Senkronize ediliyor...';
+        const res = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        pool = await res.json();
+        document.getElementById('statSync').innerText = new Date().toLocaleTimeString('tr-TR');
+        render();
+      } catch (e) {
+        document.getElementById('statSync').innerText = 'Bağlantı Hatası';
       }
     }
 
-    function renderCards() {
-      const passed = getPassed();
-      const searchQuery = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
+    function render() {
+      const rej = getRejected();
+      document.getElementById('passCount').innerText = rej.length;
 
-      let filtered = rawPool.filter(item => !passed.includes(item.id));
+      const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+      const sortType = document.getElementById('sortSelect')?.value || 'newest';
+      const priceFilter = document.getElementById('priceFilter')?.value || 'all';
 
-      if (currentCategory !== "all") {
-        filtered = filtered.filter(item => item.category === currentCategory);
+      let list = pool.filter(item => !rej.includes(item.id));
+
+      // Kategori Filtresi
+      if (currentCategory !== 'all') {
+        list = list.filter(item => item.category === currentCategory);
       }
 
-      if (searchQuery) {
-        filtered = filtered.filter(item => 
-          (item.title || "").toLowerCase().includes(searchQuery) ||
-          (item.city || "").toLowerCase().includes(searchQuery) ||
-          (item.docketNo || "").toLowerCase().includes(searchQuery) ||
-          (item.district || "").toLowerCase().includes(searchQuery)
+      // Fiyat Filtresi (Açılış / Fırsat Fiyatına Göre)
+      if (priceFilter !== 'all') {
+        list = list.filter(item => {
+          const price = item.offerPrice || 0;
+          if (priceFilter === '0-500k') return price <= 500000;
+          if (priceFilter === '500k-1.5m') return price > 500000 && price <= 1500000;
+          if (priceFilter === '1.5m-5m') return price > 1500000 && price <= 5000000;
+          if (priceFilter === '5m+') return price > 5000000;
+          return true;
+        });
+      }
+
+      // Kelime Arama
+      if (q) {
+        list = list.filter(item => 
+          (item.title || '').toLowerCase().includes(q) ||
+          (item.city || '').toLowerCase().includes(q) ||
+          (item.district || '').toLowerCase().includes(q) ||
+          (item.source || '').toLowerCase().includes(q) ||
+          (item.docketNo || '').toLowerCase().includes(q)
         );
       }
 
-      const visible = filtered.slice(0, VISIBLE_COUNT);
-      const queueCount = Math.max(0, filtered.length - VISIBLE_COUNT);
+      // Sıralama
+      if (sortType === 'profit') {
+        list.sort((a, b) => (b.estimatedProfit || 0) - (a.estimatedProfit || 0));
+      } else if (sortType === 'price_asc') {
+        list.sort((a, b) => (a.offerPrice || 0) - (b.offerPrice || 0));
+      } else if (sortType === 'price_desc') {
+        list.sort((a, b) => (b.offerPrice || 0) - (a.offerPrice || 0));
+      }
 
-      document.getElementById("metricVisible").innerText = visible.length;
-      document.getElementById("metricTotal").innerText = rawPool.length;
-      document.getElementById("metricQueue").innerText = queueCount;
+      document.getElementById('statTotal').innerText = pool.length;
+      document.getElementById('statVisible').innerText = list.length;
 
-      const totalProfit = visible.reduce((acc, it) => acc + (it.estimatedProfit || 0), 0);
-      document.getElementById("metricProfit").innerText = "₺" + totalProfit.toLocaleString("tr-TR");
+      const totalProfit = list.reduce((acc, it) => acc + (it.estimatedProfit || 0), 0);
+      document.getElementById('statProfit').innerText = '₺' + totalProfit.toLocaleString('tr-TR');
 
-      const grid = document.getElementById("cardGrid");
+      const container = document.getElementById('feedContainer');
 
-      if (visible.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full py-16 text-center border border-white/5 rounded-2xl glass-panel p-8">
-            <div class="text-3xl mb-3">🎯</div>
-            <div class="text-base font-semibold dark:text-white text-slate-900 mb-1">Vitrin Boş / Tüm İlanlar Pas Geçildi</div>
-            <p class="text-xs text-slate-400 mb-4">Yeni tarama bekleniyor veya pas listesini sıfırlayabilirsiniz.</p>
-            <button onclick="resetPassList()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-lg transition font-medium">
-              Pas Listesini Sıfırla
-            </button>
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="py-16 text-center border border-white/5 rounded-lg bg-panel p-6">
+            <p class="text-sm font-semibold text-white mb-1">Seçilen Fiyat Aralığında İlan Yok</p>
+            <p class="text-xs text-neutral-500 mb-4">Fiyat aralığını genişletin veya filtreleri temizleyin.</p>
+            <button onclick="document.getElementById('priceFilter').value='all'; render();" class="text-xs px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white border border-white/10 transition">Fiyat Filtresini Sıfırla</button>
           </div>
         `;
         return;
       }
 
-      grid.innerHTML = visible.map(item => {
-        const badgeColor = item.badge?.includes("İCRA") ? "bg-amber-950/40 text-amber-400 border-amber-800/60" :
-                           item.badge?.includes("KAMU") ? "bg-purple-950/40 text-purple-400 border-purple-800/60" :
-                           "bg-emerald-950/40 text-emerald-400 border-emerald-800/60";
+      container.innerHTML = list.map(item => {
+        const isOfficial = (item.badge || '').includes('İCRA') || (item.badge || '').includes('KAMU');
+        const badgeStyle = isOfficial 
+          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
-        const docketDisplay = item.docketNo || `DOSYA #${item.id.slice(-8)}`;
+        const categoryIcon = item.categoryIcon || (item.category === 'automotive' ? '🚗' : item.category === 'land' ? '🌾' : '🏢');
+
+        const market = (item.marketPrice || 0).toLocaleString('tr-TR');
+        const offer = (item.offerPrice || 0).toLocaleString('tr-TR');
+        const profit = (item.estimatedProfit || 0).toLocaleString('tr-TR');
+        const docket = item.docketNo || item.id;
+        const cleanTitle = (item.title || '').replace(/'/g, "\'");
+        const cleanCity = (item.city || 'Türkiye').replace(/'/g, "\'");
 
         return `
-          <article class="ad-card rounded-xl p-5 flex flex-col justify-between">
-            <div>
-              <div class="flex justify-between items-center text-[10px] text-slate-400 pb-2.5 mb-3 border-b border-white/5 font-mono">
-                <span class="barcode-font font-bold tracking-wider text-slate-500">||| ${docketDisplay}</span>
-                <span class="dark:text-slate-400 text-slate-600">%${(item.discountRate || 50).toFixed(0)} İSKONTO</span>
+          <div class="item-card bg-panel border border-borderSubtle rounded-xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-start gap-3.5 flex-1 min-w-0">
+              <div class="w-10 h-10 rounded-lg bg-neutral-900 border border-white/10 flex items-center justify-center text-lg shrink-0 select-none shadow-sm mt-0.5">
+                ${categoryIcon}
               </div>
 
-              <div class="flex justify-between items-center gap-2 mb-2.5">
-                <span class="tag-badge px-2 py-0.5 rounded border ${badgeColor} font-bold flex items-center gap-1">
-                  ${item.badge || "⚡ FIRSAT"}
-                </span>
-                <span class="text-[11px] font-mono text-slate-400 flex items-center gap-1">
-                  <span>${item.categoryIcon || "📦"}</span>
-                  <span>${item.categoryName || "Varlık"}</span>
-                </span>
-              </div>
-
-              <h2 class="text-sm font-semibold dark:text-slate-100 text-slate-900 line-clamp-2 mb-2.5 leading-snug hover:text-emerald-500 transition" title="${item.title}">
-                ${item.title}
-              </h2>
-
-              <div class="text-xs text-slate-400 mb-3.5 flex items-center gap-1.5 font-medium">
-                <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="dark:text-slate-200 text-slate-800 font-semibold">${item.city || "Türkiye"}</span>
-                <span class="text-slate-400">•</span>
-                <span class="truncate text-slate-400">${item.district || item.source || "Resmi Satış"}</span>
-              </div>
-
-              <div class="dark:bg-surface-900/90 bg-slate-50 border dark:border-white/5 border-slate-200 rounded-lg p-3 mb-3.5 space-y-2 font-mono text-xs">
-                <div class="flex justify-between items-center text-slate-400">
-                  <span class="text-[11px]">Bilirkişi / Rayiç:</span>
-                  <span class="line-through">₺${(item.marketPrice || 0).toLocaleString("tr-TR")}</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1.5 text-xs">
+                  <span class="px-2 py-0.5 rounded border ${badgeStyle} font-mono font-medium text-[11px]">
+                    ${item.badge || 'FIRSAT'}
+                  </span>
+                  <span class="text-neutral-500 font-mono text-[11px]">${docket}</span>
+                  <span class="text-neutral-600">•</span>
+                  <span class="text-neutral-300 font-medium">${item.city || 'Türkiye'} / ${item.district || item.source || 'Resmi'}</span>
                 </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-[11px] dark:text-slate-300 text-slate-700">Açılış / Fırsat:</span>
-                  <span class="text-sm font-bold dark:text-white text-slate-900">₺${(item.offerPrice || 0).toLocaleString("tr-TR")}</span>
-                </div>
-                <div class="flex justify-between items-center pt-1.5 border-t dark:border-white/5 border-slate-200">
-                  <span class="text-[11px] text-emerald-500 font-semibold">Tahmini Net Marj:</span>
-                  <span class="text-xs font-bold text-emerald-500">+₺${(item.estimatedProfit || 0).toLocaleString("tr-TR")}</span>
-                </div>
-              </div>
 
-              <p class="text-[11px] text-slate-400 italic mb-3.5 line-clamp-2 leading-relaxed">
-                "${item.aiAnalysis || item.tramerLegal || "Resmi UYAP / portal üzerinden doğrulanmış kayıt."}"
-              </p>
+                <h2 class="text-sm md:text-base font-semibold text-white leading-snug line-clamp-2 mb-1 hover:text-emerald-400 transition">
+                  <a href="${item.sourceUrl || '#'}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+                </h2>
+
+                <p class="text-xs text-neutral-400 line-clamp-1">
+                  ${item.aiAnalysis || item.tramerLegal || 'Doğrulanmış açık veri kaydı.'}
+                </p>
+              </div>
             </div>
 
-            <div class="flex items-center gap-2 pt-3 border-t dark:border-white/5 border-slate-200">
-              <a href="${item.sourceUrl || "#"}" target="_blank" rel="noopener noreferrer" 
-                 class="flex-1 text-center py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition shadow-sm">
-                Resmi İlana Git ↗
-              </a>
-              <button onclick="passItem('${item.id}')" title="Bu ilanı pas geç ve yerine sıradaki yedek ilanı vitrine al"
-                      class="px-3 py-2 dark:bg-slate-800 bg-slate-100 hover:bg-rose-950/40 hover:text-rose-500 dark:border-slate-700/80 border-slate-300 text-slate-400 border rounded-lg text-xs font-medium transition flex items-center justify-center gap-1">
-                <span>✕</span>
-                <span class="hidden sm:inline">Pas</span>
-              </button>
+            <!-- Fiyat ve İşlemler -->
+            <div class="flex items-center justify-between md:justify-end gap-5 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-white/5 font-mono shrink-0">
+              <div class="text-left md:text-right">
+                <div class="text-[11px] text-neutral-500 line-through">₺${market}</div>
+                <div class="text-base font-bold text-white">₺${offer}</div>
+                <div class="text-[11px] text-emerald-400 font-semibold">+₺${profit} Marj</div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button onclick="shareWhatsApp('${cleanTitle}', '${cleanCity}', '${market}', '${offer}', '${profit}', '${item.sourceUrl || ''}', '${docket}')" 
+                        title="İlanı WhatsApp ile Paylaş"
+                        class="px-2.5 py-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-800/60 text-emerald-400 text-xs font-medium transition flex items-center gap-1">
+                  <span>💬</span>
+                  <span class="hidden sm:inline">Paylaş</span>
+                </button>
+
+                <a href="${item.sourceUrl || '#'}" target="_blank" rel="noopener noreferrer" 
+                   class="px-3.5 py-2 rounded-lg bg-white hover:bg-neutral-200 text-neutral-900 font-semibold text-xs transition shadow-sm">
+                  İlana Git ↗
+                </a>
+
+                <button onclick="rejectItem('${item.id}')" title="Listeden kaldır"
+                        class="px-2.5 py-2 rounded-lg border border-white/10 hover:border-red-500/40 hover:text-red-400 text-neutral-400 text-xs transition">
+                  ✕
+                </button>
+              </div>
             </div>
-          </article>
+          </div>
         `;
-      }).join("");
+      }).join('');
     }
 
-    initTheme();
-    savePassed(getPassed());
-    fetchPool();
-    setInterval(fetchPool, 30000);
+    loadData();
+    setInterval(loadData, 30000);
   </script>
 </body>
 </html>
