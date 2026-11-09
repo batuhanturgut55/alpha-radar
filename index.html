@@ -367,7 +367,7 @@
       }
     }
 
-    function getRemainingDays(addedTs) {
+    function getRemainingDays(addedTs) { if(!addedTs) return 14;
       const now = Math.floor(Date.now() / 1000);
       const ts = addedTs || now;
       const elapsed = now - ts;
@@ -442,7 +442,7 @@
       const priceFilter = document.getElementById('priceFilter')?.value || 'all';
       const channelFilter = document.getElementById('channelFilter')?.value || 'all';
 
-      let list = pool.filter(item => !rej.includes(item.id));
+      let list = Array.isArray(pool) ? pool.filter(item => !rej.includes(item.id)) : [];
 
       if (currentCity !== 'all') {
         list = list.filter(item => {
