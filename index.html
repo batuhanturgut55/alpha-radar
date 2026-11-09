@@ -1,228 +1,377 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALPHA RADAR | Canlı Kelepir & İhale Vitrini</title>
+  <title>ALPHA RADAR — Finansal İstihbarat & Varlık Terminali</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          },
+          colors: {
+            surface: { 900: "#090d16", 800: "#0f172a", 700: "#1e293b", 600: "#334155" },
+            brand: { 500: "#10b981", 600: "#059669", 400: "#34d399" }
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    body { font-family: "JetBrains Mono", monospace; background-color: #080c14; color: #f3f4f6; }
-    .card-border { border: 1px solid rgba(16, 185, 129, 0.25); background: #0f172a; }
-    .card-border:hover { border-color: rgba(16, 185, 129, 0.7); box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+    body { font-feature-settings: "cv02", "cv03", "cv04", "cv11"; }
+    .dark body { background-color: #06090f; color: #f1f5f9; }
+    html:not(.dark) body { background-color: #f8fafc; color: #0f172a; }
+
+    .dark .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.07); }
+    html:not(.dark) .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+
+    .dark .ad-card { border: 1px solid rgba(255, 255, 255, 0.08); background: #0c121e; }
+    html:not(.dark) .ad-card { border: 1px solid rgba(0, 0, 0, 0.08); background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+
+    .ad-card { transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1); }
+    .dark .ad-card:hover { transform: translateY(-3px); border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.7); }
+    html:not(.dark) .ad-card:hover { transform: translateY(-3px); border-color: rgba(16, 185, 129, 0.5); box-shadow: 0 14px 28px -10px rgba(16, 185, 129, 0.15); }
+
+    .tag-badge { font-family: "JetBrains Mono", monospace; font-size: 10.5px; letter-spacing: -0.01em; }
+    .barcode-font { font-family: "JetBrains Mono", monospace; letter-spacing: 0.1em; }
   </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen flex flex-col justify-between">
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500/20 selection:text-brand-400">
 
-  <div>
-    <!-- Üst Bar -->
-    <header class="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-5 gap-4">
-      <div>
-        <div class="flex items-center gap-3">
-          <span class="inline-block w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <h1 class="text-2xl md:text-3xl font-extrabold tracking-wider text-white">ALPHA RADAR</h1>
-          <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-2.5 py-0.5 rounded font-bold">CANLI VİTRİN</span>
-        </div>
-        <p class="text-xs text-gray-400 mt-1">İcra, Kamu, Sahibinden, Arabam ve Emlakjet Kelepir Havuzu</p>
-      </div>
+  <!-- Üst Borsa & Canlı Durum Bandı -->
+  <div class="border-b border-white/5 dark:bg-surface-900/90 bg-slate-100 text-xs py-2 px-4 md:px-8 flex justify-between items-center text-slate-500 font-mono transition-colors">
+    <div class="flex items-center gap-4">
       <div class="flex items-center gap-2">
-        <button onclick="resetRejected()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-2 rounded border border-gray-700 transition">
-          🗑️ Pas Geçilenleri Sıfırla (<span id="rejCount">0</span>)
-        </button>
-        <button onclick="fetchLatestPool()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded font-bold transition flex items-center gap-1.5">
-          🔄 Anlık Veri Çek
-        </button>
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        <span class="dark:text-slate-200 text-slate-800 font-semibold tracking-wide">ALPHA FEED v6.5 PRO</span>
       </div>
-    </header>
+      <span class="hidden md:inline text-slate-400">|</span>
+      <span class="hidden md:inline">TARAMA AĞI: <span class="dark:text-slate-200 text-slate-700 font-medium">UYAP İCRA, KAMU İHALE, SAHİBİNDEN, ARABAM, EMLAKJET</span></span>
+    </div>
+    <div class="flex items-center gap-4">
+      <span>SON SENKRON: <span id="tickerTime" class="dark:text-slate-200 text-slate-800 font-semibold">Bağlanıyor...</span></span>
+      <span class="text-slate-400">|</span>
+      <span class="text-brand-500 font-medium">9 SLOT VİTRİN</span>
+    </div>
+  </div>
 
-    <!-- Sayaç / İstatistik -->
-    <div class="max-w-7xl mx-auto mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-      <div class="bg-slate-900 p-3 rounded border border-gray-800">
-        <span class="text-gray-500 block">VİTRİNDEKİ İLAN</span>
-        <span id="statVisible" class="text-lg font-bold text-emerald-400">0 / 6</span>
+  <!-- Ana Navigasyon -->
+  <header class="border-b border-white/5 glass-panel sticky top-0 z-40 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 py-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-bold text-white shadow-lg shadow-emerald-900/30">
+          α
+        </div>
+        <div>
+          <h1 class="text-lg font-bold dark:text-white text-slate-900 tracking-tight flex items-center gap-2">
+            ALPHA RADAR <span class="text-[10px] text-slate-400 font-mono font-normal border border-slate-700 px-1.5 py-0.5 rounded dark:bg-slate-800/80 bg-slate-200">TERMINAL</span>
+          </h1>
+          <p class="text-xs text-slate-400">Kurumsal Fırsat, İhale & Kelepir İstihbaratı</p>
+        </div>
       </div>
-      <div class="bg-slate-900 p-3 rounded border border-gray-800">
-        <span class="text-gray-500 block">TOPLAM HAVUZ</span>
-        <span id="statPool" class="text-lg font-bold text-white">0</span>
+
+      <div class="flex items-center gap-2.5 w-full md:w-auto">
+        <div class="relative flex-1 md:w-64">
+          <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Şehir, marka veya esas no..." 
+                 class="w-full dark:bg-slate-900/90 bg-slate-100 border dark:border-slate-700/80 border-slate-300 rounded-lg px-3 py-1.5 text-xs dark:text-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 transition">
+        </div>
+
+        <button onclick="toggleTheme()" id="themeBtn" title="Temayı Değiştir"
+                class="p-2 rounded-lg border dark:border-slate-700 border-slate-300 dark:bg-slate-800/60 bg-white text-slate-400 hover:text-slate-200 transition">
+          <span id="themeIcon">☀️</span>
+        </button>
+
+        <button onclick="resetPassList()" class="text-xs text-slate-400 hover:text-slate-200 border dark:border-slate-700/70 border-slate-300 px-3 py-1.5 rounded-lg transition whitespace-nowrap dark:bg-slate-800/50 bg-white">
+          Pas (<span id="passCount" class="font-mono font-bold">0</span>)
+        </button>
+        <button onclick="fetchPool()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-1.5 rounded-lg transition shadow-md shadow-emerald-950 flex items-center gap-1.5">
+          <span>Yenile</span>
+        </button>
       </div>
-      <div class="bg-slate-900 p-3 rounded border border-gray-800">
-        <span class="text-gray-500 block">YEDEKTE BEKLEYEN</span>
-        <span id="statWaiting" class="text-lg font-bold text-blue-400">0</span>
+    </div>
+  </header>
+
+  <!-- İstatistik Barı & Filtre Sekmeleri -->
+  <section class="max-w-7xl mx-auto px-4 md:px-8 pt-6 pb-3 w-full">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+      <div class="glass-panel p-4 rounded-xl">
+        <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1">VİTRİN / HAVUZ</span>
+        <div class="flex items-baseline gap-2">
+          <span id="metricVisible" class="text-xl font-bold font-mono dark:text-white text-slate-900">0</span>
+          <span class="text-xs text-slate-400 font-mono">/ <span id="metricTotal">0</span> İlan</span>
+        </div>
       </div>
-      <div class="bg-slate-900 p-3 rounded border border-gray-800">
-        <span class="text-gray-500 block">SON GÜNCELLEME</span>
-        <span id="statTime" class="text-lg font-bold text-gray-300">Bağlanıyor...</span>
+      <div class="glass-panel p-4 rounded-xl">
+        <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1">TOPLAM NET MARJ</span>
+        <div id="metricProfit" class="text-xl font-bold font-mono text-emerald-500">₺0</div>
+      </div>
+      <div class="glass-panel p-4 rounded-xl">
+        <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1">ORTALAMA İSKONTO</span>
+        <div id="metricDiscount" class="text-xl font-bold font-mono text-blue-500">%49.0 TABAN</div>
+      </div>
+      <div class="glass-panel p-4 rounded-xl">
+        <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1">İSTİHBARAT RADARI</span>
+        <div class="text-sm font-semibold dark:text-slate-200 text-slate-800 mt-1 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 5 Portal Aktif
+        </div>
       </div>
     </div>
 
-    <!-- 6 Kartlık Sabit Vitrin Izgarası -->
-    <main class="max-w-7xl mx-auto">
-      <div id="gridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="col-span-full py-20 text-center text-gray-500 animate-pulse">
-          Canlı istihbarat havuzundan güncel ilanlar çekiliyor...
-        </div>
+    <!-- Kategori Butonları -->
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-4">
+      <div class="flex items-center gap-1.5 p-1 dark:bg-slate-900/80 bg-slate-200 rounded-lg border dark:border-slate-800 border-slate-300 text-xs font-medium">
+        <button onclick="setCategory('all')" id="cat-all" class="cat-btn px-3 py-1.5 rounded-md dark:text-white text-slate-900 dark:bg-slate-800 bg-white shadow">Tümü (9 Slot)</button>
+        <button onclick="setCategory('automotive')" id="cat-automotive" class="cat-btn px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white transition">🚗 Vasıta</button>
+        <button onclick="setCategory('land')" id="cat-land" class="cat-btn px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white transition">🌾 Tarla / Arsa</button>
+        <button onclick="setCategory('realestate')" id="cat-realestate" class="cat-btn px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white transition">🏢 Gayrimenkul</button>
       </div>
-    </main>
-  </div>
+      <div class="text-xs text-slate-400 font-mono">
+        YEDEK HAVUZDA: <span id="metricQueue" class="text-emerald-500 font-bold">0</span> İLAN
+      </div>
+    </div>
+  </section>
 
-  <footer class="max-w-7xl mx-auto mt-12 py-4 border-t border-gray-800/80 text-center text-xs text-gray-600 w-full">
-    Alpha Radar Otonom İstihbarat Ağı • Kesintisiz Canlı Veri Akışı
+  <!-- 9 Slotluk İlan Vitrini -->
+  <main class="max-w-7xl mx-auto px-4 md:px-8 py-3 flex-1 w-full">
+    <div id="cardGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="col-span-full py-24 text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent mb-3"></div>
+        <p class="text-xs font-mono text-slate-400">9 Slotluk İstihbarat Havuzu Senkronize Ediliyor...</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-white/5 py-6 mt-12 dark:bg-surface-900/50 bg-slate-100 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500 font-mono">
+      <span>ALPHA RADAR • 9 Slot Otonom Finansal Terminal</span>
+      <span>Resmi UYAP Barkod & Piyasa Doğrulama Motoru</span>
+    </div>
   </footer>
 
   <script>
     const DATA_URL = "https://raw.githubusercontent.com/batuhanturgut55/alpha-radar/main/data.json";
-    const VISIBLE_COUNT = 6; // Ekranda daima sabit 6 kart duracak
-    let masterPool = [];
+    const VISIBLE_COUNT = 9;
+    let rawPool = [];
+    let currentCategory = "all";
 
-    function getRejected() {
+    function initTheme() {
+      const saved = localStorage.getItem("alpha_theme") || "dark";
+      if (saved === "light") {
+        document.documentElement.classList.remove("dark");
+        document.getElementById("themeIcon").innerText = "🌙";
+      } else {
+        document.documentElement.classList.add("dark");
+        document.getElementById("themeIcon").innerText = "☀️";
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains("dark");
+      if (isDark) {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("alpha_theme", "light");
+        document.getElementById("themeIcon").innerText = "🌙";
+      } else {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("alpha_theme", "dark");
+        document.getElementById("themeIcon").innerText = "☀️";
+      }
+    }
+
+    function getPassed() {
       try {
-        return JSON.parse(localStorage.getItem("alpha_rejected_ids") || "[]");
+        return JSON.parse(localStorage.getItem("alpha_passed_ads") || "[]");
       } catch (e) {
         return [];
       }
     }
 
-    function saveRejected(arr) {
-      localStorage.setItem("alpha_rejected_ids", JSON.stringify(arr));
-      document.getElementById("rejCount").innerText = arr.length;
+    function savePassed(arr) {
+      localStorage.setItem("alpha_passed_ads", JSON.stringify(arr));
+      document.getElementById("passCount").innerText = arr.length;
     }
 
-    function resetRejected() {
+    function passItem(id) {
+      const p = getPassed();
+      if (!p.includes(id)) {
+        p.push(id);
+        savePassed(p);
+      }
+      renderCards();
+    }
+
+    function resetPassList() {
       if (confirm("Pas geçtiğin tüm ilanları vitrine geri döndürmek istiyor musun?")) {
-        localStorage.removeItem("alpha_rejected_ids");
-        saveRejected([]);
-        renderSlots();
+        localStorage.removeItem("alpha_passed_ads");
+        savePassed([]);
+        renderCards();
       }
     }
 
-    // Bir ilanı pas geçince hemen yedekten sıradaki gelir
-    function passItem(adId) {
-      const rej = getRejected();
-      if (!rej.includes(adId)) {
-        rej.push(adId);
-        saveRejected(rej);
+    function setCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll(".cat-btn").forEach(btn => {
+        btn.classList.remove("dark:text-white", "text-slate-900", "dark:bg-slate-800", "bg-white", "shadow");
+        btn.classList.add("text-slate-500");
+      });
+      const activeBtn = document.getElementById("cat-" + cat);
+      if (activeBtn) {
+        activeBtn.classList.remove("text-slate-500");
+        activeBtn.classList.add("dark:text-white", "text-slate-900", "dark:bg-slate-800", "bg-white", "shadow");
       }
-      renderSlots();
+      renderCards();
     }
 
-    async function fetchLatestPool() {
+    function applyFilters() {
+      renderCards();
+    }
+
+    async function fetchPool() {
       try {
-        document.getElementById("statTime").innerText = "Güncelleniyor...";
-        // GitHub CDN ve tarayıcı önbelleğini kıran sorgu
-        const res = await fetch(DATA_URL + "?v=" + Date.now(), {
-          cache: "no-store",
-          headers: { "Pragma": "no-cache", "Cache-Control": "no-cache" }
-        });
+        document.getElementById("tickerTime").innerText = "Taranıyor...";
+        const res = await fetch(DATA_URL + "?_ts=" + Date.now(), { cache: "no-store" });
         if (!res.ok) throw new Error("HTTP " + res.status);
-        masterPool = await res.json();
-        
-        document.getElementById("statTime").innerText = new Date().toLocaleTimeString("tr-TR");
-        renderSlots();
+        rawPool = await res.json();
+        document.getElementById("tickerTime").innerText = new Date().toLocaleTimeString("tr-TR");
+        renderCards();
       } catch (err) {
         console.error(err);
-        document.getElementById("statTime").innerText = "Bağlantı Hatası";
+        document.getElementById("tickerTime").innerText = "Bağlantı Hatası";
       }
     }
 
-    function renderSlots() {
-      const rejected = getRejected();
-      // Pas geçilmemiş tüm aktif havuz
-      const availablePool = masterPool.filter(item => !rejected.includes(item.id));
+    function renderCards() {
+      const passed = getPassed();
+      const searchQuery = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
 
-      // Ekrana sadece ilk 6 tanesi basılacak
-      const visibleItems = availablePool.slice(0, VISIBLE_COUNT);
-      const waitingCount = Math.max(0, availablePool.length - VISIBLE_COUNT);
+      let filtered = rawPool.filter(item => !passed.includes(item.id));
 
-      document.getElementById("statVisible").innerText = visibleItems.length + " / " + VISIBLE_COUNT;
-      document.getElementById("statPool").innerText = masterPool.length;
-      document.getElementById("statWaiting").innerText = waitingCount;
-      document.getElementById("rejCount").innerText = rejected.length;
+      if (currentCategory !== "all") {
+        filtered = filtered.filter(item => item.category === currentCategory);
+      }
 
-      const container = document.getElementById("gridContainer");
+      if (searchQuery) {
+        filtered = filtered.filter(item => 
+          (item.title || "").toLowerCase().includes(searchQuery) ||
+          (item.city || "").toLowerCase().includes(searchQuery) ||
+          (item.docketNo || "").toLowerCase().includes(searchQuery) ||
+          (item.district || "").toLowerCase().includes(searchQuery)
+        );
+      }
 
-      if (visibleItems.length === 0) {
-        container.innerHTML = `
-          <div class="col-span-full py-16 text-center bg-slate-900/60 border border-gray-800 rounded-xl p-8">
-            <div class="text-4xl mb-3">🎯</div>
-            <div class="text-lg font-bold text-white mb-2">Gösterilecek Yeni İlan Kalmadı</div>
-            <p class="text-xs text-gray-400 mb-5">Havuzdaki tüm mevcut ilanları pas geçtiniz. Yeni tarama bekleniyor veya sıfırlayabilirsiniz.</p>
-            <button onclick="resetRejected()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded transition">
-              Pas Geçilenleri Geri Getir
+      const visible = filtered.slice(0, VISIBLE_COUNT);
+      const queueCount = Math.max(0, filtered.length - VISIBLE_COUNT);
+
+      document.getElementById("metricVisible").innerText = visible.length;
+      document.getElementById("metricTotal").innerText = rawPool.length;
+      document.getElementById("metricQueue").innerText = queueCount;
+
+      const totalProfit = visible.reduce((acc, it) => acc + (it.estimatedProfit || 0), 0);
+      document.getElementById("metricProfit").innerText = "₺" + totalProfit.toLocaleString("tr-TR");
+
+      const grid = document.getElementById("cardGrid");
+
+      if (visible.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-16 text-center border border-white/5 rounded-2xl glass-panel p-8">
+            <div class="text-3xl mb-3">🎯</div>
+            <div class="text-base font-semibold dark:text-white text-slate-900 mb-1">Vitrin Boş / Tüm İlanlar Pas Geçildi</div>
+            <p class="text-xs text-slate-400 mb-4">Yeni tarama bekleniyor veya pas listesini sıfırlayabilirsiniz.</p>
+            <button onclick="resetPassList()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-lg transition font-medium">
+              Pas Listesini Sıfırla
             </button>
           </div>
         `;
         return;
       }
 
-      container.innerHTML = visibleItems.map(item => `
-        <div class="card-border rounded-xl p-5 flex flex-col justify-between transition relative group">
-          <div>
-            <!-- Üst Başlık & Rozetler -->
-            <div class="flex justify-between items-start mb-3 gap-2">
-              <span class="text-xs px-2.5 py-1 rounded bg-gray-800 text-gray-200 font-bold border border-gray-700 flex items-center gap-1.5">
-                <span>${item.categoryIcon || "📦"}</span>
-                <span>${item.categoryName || "Fırsat Varlığı"}</span>
-              </span>
-              <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold border border-emerald-800">
-                ${item.badge || item.urgencyTag || "⚡ FIRSAT"}
-              </span>
+      grid.innerHTML = visible.map(item => {
+        const badgeColor = item.badge?.includes("İCRA") ? "bg-amber-950/40 text-amber-400 border-amber-800/60" :
+                           item.badge?.includes("KAMU") ? "bg-purple-950/40 text-purple-400 border-purple-800/60" :
+                           "bg-emerald-950/40 text-emerald-400 border-emerald-800/60";
+
+        const docketDisplay = item.docketNo || `DOSYA #${item.id.slice(-8)}`;
+
+        return `
+          <article class="ad-card rounded-xl p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center text-[10px] text-slate-400 pb-2.5 mb-3 border-b border-white/5 font-mono">
+                <span class="barcode-font font-bold tracking-wider text-slate-500">||| ${docketDisplay}</span>
+                <span class="dark:text-slate-400 text-slate-600">%${(item.discountRate || 50).toFixed(0)} İSKONTO</span>
+              </div>
+
+              <div class="flex justify-between items-center gap-2 mb-2.5">
+                <span class="tag-badge px-2 py-0.5 rounded border ${badgeColor} font-bold flex items-center gap-1">
+                  ${item.badge || "⚡ FIRSAT"}
+                </span>
+                <span class="text-[11px] font-mono text-slate-400 flex items-center gap-1">
+                  <span>${item.categoryIcon || "📦"}</span>
+                  <span>${item.categoryName || "Varlık"}</span>
+                </span>
+              </div>
+
+              <h2 class="text-sm font-semibold dark:text-slate-100 text-slate-900 line-clamp-2 mb-2.5 leading-snug hover:text-emerald-500 transition" title="${item.title}">
+                ${item.title}
+              </h2>
+
+              <div class="text-xs text-slate-400 mb-3.5 flex items-center gap-1.5 font-medium">
+                <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="dark:text-slate-200 text-slate-800 font-semibold">${item.city || "Türkiye"}</span>
+                <span class="text-slate-400">•</span>
+                <span class="truncate text-slate-400">${item.district || item.source || "Resmi Satış"}</span>
+              </div>
+
+              <div class="dark:bg-surface-900/90 bg-slate-50 border dark:border-white/5 border-slate-200 rounded-lg p-3 mb-3.5 space-y-2 font-mono text-xs">
+                <div class="flex justify-between items-center text-slate-400">
+                  <span class="text-[11px]">Bilirkişi / Rayiç:</span>
+                  <span class="line-through">₺${(item.marketPrice || 0).toLocaleString("tr-TR")}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-[11px] dark:text-slate-300 text-slate-700">Açılış / Fırsat:</span>
+                  <span class="text-sm font-bold dark:text-white text-slate-900">₺${(item.offerPrice || 0).toLocaleString("tr-TR")}</span>
+                </div>
+                <div class="flex justify-between items-center pt-1.5 border-t dark:border-white/5 border-slate-200">
+                  <span class="text-[11px] text-emerald-500 font-semibold">Tahmini Net Marj:</span>
+                  <span class="text-xs font-bold text-emerald-500">+₺${(item.estimatedProfit || 0).toLocaleString("tr-TR")}</span>
+                </div>
+              </div>
+
+              <p class="text-[11px] text-slate-400 italic mb-3.5 line-clamp-2 leading-relaxed">
+                "${item.aiAnalysis || item.tramerLegal || "Resmi UYAP / portal üzerinden doğrulanmış kayıt."}"
+              </p>
             </div>
 
-            <!-- İlan Başlığı -->
-            <h2 class="text-sm font-bold text-white line-clamp-2 mb-2 group-hover:text-emerald-400 transition" title="${item.title}">
-              ${item.title}
-            </h2>
-
-            <!-- Konum & Kurum -->
-            <div class="text-xs text-gray-400 mb-4 flex items-center gap-1.5">
-              <span>📍</span>
-              <span class="font-semibold text-gray-200">${item.city || "Türkiye"}</span>
-              <span class="text-gray-600">•</span>
-              <span class="truncate text-gray-400">${item.district || item.source || "Resmi Satış"}</span>
+            <div class="flex items-center gap-2 pt-3 border-t dark:border-white/5 border-slate-200">
+              <a href="${item.sourceUrl || "#"}" target="_blank" rel="noopener noreferrer" 
+                 class="flex-1 text-center py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition shadow-sm">
+                Resmi İlana Git ↗
+              </a>
+              <button onclick="passItem('${item.id}')" title="Bu ilanı pas geç ve yerine sıradaki yedek ilanı vitrine al"
+                      class="px-3 py-2 dark:bg-slate-800 bg-slate-100 hover:bg-rose-950/40 hover:text-rose-500 dark:border-slate-700/80 border-slate-300 text-slate-400 border rounded-lg text-xs font-medium transition flex items-center justify-center gap-1">
+                <span>✕</span>
+                <span class="hidden sm:inline">Pas</span>
+              </button>
             </div>
-
-            <!-- Fiyat Kutusu -->
-            <div class="bg-black/50 rounded-lg p-3 border border-gray-800/80 mb-4 space-y-1.5 text-xs">
-              <div class="flex justify-between text-gray-400">
-                <span>Piyasa / Muhammen:</span>
-                <span class="text-gray-300 font-semibold line-through">₺${(item.marketPrice || 0).toLocaleString("tr-TR")}</span>
-              </div>
-              <div class="flex justify-between text-white font-bold">
-                <span>Fırsat Teklifi:</span>
-                <span class="text-emerald-400 text-sm">₺${(item.offerPrice || 0).toLocaleString("tr-TR")}</span>
-              </div>
-              <div class="flex justify-between text-gray-400 pt-1 border-t border-gray-800">
-                <span>Tahmini Net Marj:</span>
-                <span class="text-blue-400 font-bold">+₺${(item.estimatedProfit || 0).toLocaleString("tr-TR")}</span>
-              </div>
-            </div>
-
-            <p class="text-[11px] text-gray-400 italic mb-4 line-clamp-2">
-              🤖 "${item.aiAnalysis || item.tramerLegal || "Canlı istihbarat kaydı."}"
-            </p>
-          </div>
-
-          <!-- Aksiyon Butonları -->
-          <div class="flex items-center gap-2 pt-3 border-t border-gray-800/80">
-            <a href="${item.sourceUrl || "#"}" target="_blank" rel="noopener noreferrer" 
-               class="flex-1 text-center py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-xs transition">
-              🔗 İlana Git
-            </a>
-            <button onclick="passItem('${item.id}')" title="Bu ilanı pas geç ve yerine yedekteki ilanı getir"
-                    class="px-3.5 py-2.5 bg-gray-800 hover:bg-rose-950 hover:text-rose-400 hover:border-rose-800 text-gray-400 border border-gray-700 rounded text-xs font-bold transition flex items-center justify-center gap-1.5">
-              <span>✕</span>
-              <span>Pas Geç</span>
-            </button>
-          </div>
-        </div>
-      `).join("");
+          </article>
+        `;
+      }).join("");
     }
 
-    // Başlat
-    saveRejected(getRejected());
-    fetchLatestPool();
-    // 30 saniyede bir arkadaki güncellemeleri otomatik süz
-    setInterval(fetchLatestPool, 30000);
+    initTheme();
+    savePassed(getPassed());
+    fetchPool();
+    setInterval(fetchPool, 30000);
   </script>
 </body>
 </html>
