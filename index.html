@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALPHA RADAR — Kurumsal Finansal İstihbarat</title>
+  <title>ALPHA RADAR — Kurumsal Finansal İstihbarat & Varlık Havuzu</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -35,7 +35,7 @@
 </head>
 <body class="min-h-screen flex flex-col font-sans">
 
-  <!-- Üst İstihbarat Barı -->
+  <!-- Üst İstihbarat & Portföy Barı -->
   <header class="border-b border-white/[0.06] bg-canvas/90 backdrop-blur sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div class="flex items-center gap-3">
@@ -46,23 +46,23 @@
           <div class="flex items-center gap-2">
             <h1 class="text-sm font-bold tracking-tight text-white uppercase">Alpha Radar</h1>
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-[11px] font-mono text-emerald-400 font-semibold">CANLI İSTİHBARAT</span>
+            <span class="text-[11px] font-mono text-emerald-400 font-semibold">KÜMÜLATİF HAVUZ</span>
           </div>
-          <p class="text-xs text-neutral-400">UYAP İcra, Kamu/Belediye, Sahibinden, Arabam ve Emlakjet Fırsatları</p>
+          <p class="text-xs text-neutral-400">Telegram'a Aktarılan Tüm Canlı İhale & Kelepir Varlıklar</p>
         </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
         <!-- Arama Kutusu -->
-        <div class="relative flex-1 md:w-52">
-          <input type="text" id="searchInput" oninput="render()" placeholder="Şehir, marka veya merci..." 
+        <div class="relative flex-1 md:w-48">
+          <input type="text" id="searchInput" oninput="render()" placeholder="Şehir, marka, esas no..." 
                  class="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 transition">
         </div>
 
         <!-- Fiyat Aralığı Filtresi -->
         <select id="priceFilter" onchange="render()" class="bg-neutral-900 border border-white/10 text-neutral-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 transition font-mono">
           <option value="all">💵 Tüm Fiyatlar</option>
-          <option value="0-500k">₺0 - ₺500.000</option>
+          <option value="0-500k">🟢 ₺0 - ₺500.000</option>
           <option value="500k-1.5m">₺500.000 - ₺1.5M</option>
           <option value="1.5m-5m">₺1.5M - ₺5M</option>
           <option value="5m+">₺5.000.000+</option>
@@ -71,6 +71,7 @@
         <!-- Sıralama Seçici -->
         <select id="sortSelect" onchange="render()" class="bg-neutral-900 border border-white/10 text-neutral-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 transition font-mono">
           <option value="newest">🕒 En Yeni</option>
+          <option value="expiring">⏳ Süresi Bitenler</option>
           <option value="profit">💰 En Yüksek Marj</option>
           <option value="price_asc">📉 En Düşük Fiyat</option>
           <option value="price_desc">📈 En Yüksek Fiyat</option>
@@ -79,38 +80,43 @@
         <button onclick="resetRejected()" class="text-xs border border-white/10 hover:border-white/25 text-neutral-300 px-3 py-1.5 rounded-lg transition">
           Pas (<span id="passCount" class="font-mono text-emerald-400">0</span>)
         </button>
-        <button onclick="loadData()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-lg transition shadow-sm">
+        <button onclick="loadData()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-1.5 rounded-lg transition shadow-sm">
           Yenile
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Özet Metrik ve Kategori Şeridi -->
+  <!-- Özet Metrik ve Portföy Takometresi -->
   <div class="border-b border-white/[0.04] bg-neutral-950/40">
     <div class="max-w-6xl mx-auto px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
       <div class="flex items-center gap-6">
         <div>
-          <span class="text-neutral-500">HAVUZDAKİ İLAN:</span>
+          <span class="text-neutral-500">HAVUZ:</span>
           <span id="statTotal" class="text-white font-bold ml-1">0</span>
         </div>
         <div>
           <span class="text-neutral-500">LİSTELENEN:</span>
           <span id="statVisible" class="text-emerald-400 font-bold ml-1">0</span>
         </div>
-        <div class="hidden sm:block">
-          <span class="text-neutral-500">TOPLAM MARJ:</span>
+        <div>
+          <span class="text-neutral-500">TOPLAM PORTFÖY DEĞERİ:</span>
+          <span id="statPortfolio" class="text-blue-400 font-bold ml-1">₺0</span>
+        </div>
+        <div>
+          <span class="text-neutral-500">TOPLAM NET KÂR MARJI:</span>
           <span id="statProfit" class="text-emerald-400 font-bold ml-1">₺0</span>
         </div>
-        <div class="hidden md:block">
+        <div class="hidden lg:block">
           <span class="text-neutral-500">SENKRON:</span>
           <span id="statSync" class="text-neutral-300 ml-1">--:--:--</span>
         </div>
       </div>
 
-      <!-- Kategori Butonları -->
+      <!-- Kategori ve Acil Kapanış Butonları -->
       <div class="flex items-center gap-1">
         <button onclick="setCategory('all')" id="btn-all" class="px-2.5 py-1 rounded text-xs font-medium bg-neutral-800 text-white">Tümü</button>
+        <button onclick="setCategory('expiring_soon')" id="btn-expiring_soon" class="px-2.5 py-1 rounded text-xs font-medium text-amber-400 hover:bg-amber-950/30 transition">⏳ Son 48 Saat</button>
         <button onclick="setCategory('automotive')" id="btn-automotive" class="px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition">🚗 Vasıta</button>
         <button onclick="setCategory('land')" id="btn-land" class="px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition">🌾 Tarla/Arsa</button>
         <button onclick="setCategory('realestate')" id="btn-realestate" class="px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition">🏢 Gayrimenkul</button>
@@ -122,17 +128,18 @@
   <main class="max-w-6xl mx-auto px-4 md:px-6 py-6 flex-1 w-full">
     <div id="feedContainer" class="space-y-3">
       <div class="py-20 text-center text-xs text-neutral-500 font-mono">
-        İstihbarat havuzu taranıyor...
+        Kümülatif istihbarat havuzu taranıyor...
       </div>
     </div>
   </main>
 
   <footer class="border-t border-white/[0.04] py-6 text-center text-xs text-neutral-600 font-mono">
-    Alpha Radar • Kurumsal Otonom İstihbarat Platformu
+    Alpha Radar • 7/24 Kesintisiz Kümülatif İstihbarat & Varlık Havuzu
   </footer>
 
   <script>
     const DATA_URL = "https://raw.githubusercontent.com/batuhanturgut55/alpha-radar/main/data.json";
+    const TTL_SECONDS = 14 * 24 * 3600; // 14 Günlük geçerlilik süresi
     let pool = [];
     let currentCategory = 'all';
 
@@ -157,6 +164,14 @@
       }
     }
 
+    function getRemainingDays(addedTs) {
+      const now = Math.floor(Date.now() / 1000);
+      const ts = addedTs || now;
+      const elapsed = now - ts;
+      const leftSec = Math.max(0, TTL_SECONDS - elapsed);
+      return Math.ceil(leftSec / 86400);
+    }
+
     function shareWhatsApp(title, city, market, offer, profit, url, docket) {
       const msg = 
         `🚨 *ALPHA RADAR FIRSAT BİLDİRİMİ*\n` +
@@ -177,12 +192,14 @@
 
     function setCategory(cat) {
       currentCategory = cat;
-      ['all', 'automotive', 'land', 'realestate'].forEach(c => {
+      ['all', 'expiring_soon', 'automotive', 'land', 'realestate'].forEach(c => {
         const el = document.getElementById('btn-' + c);
+        if (!el) return;
         if (c === cat) {
           el.className = 'px-2.5 py-1 rounded text-xs font-medium bg-neutral-800 text-white';
         } else {
-          el.className = 'px-2.5 py-1 rounded text-xs font-medium text-neutral-400 hover:text-white transition';
+          const defaultColor = c === 'expiring_soon' ? 'text-amber-400' : 'text-neutral-400';
+          el.className = `px-2.5 py-1 rounded text-xs font-medium ${defaultColor} hover:text-white transition`;
         }
       });
       render();
@@ -212,11 +229,13 @@
       let list = pool.filter(item => !rej.includes(item.id));
 
       // Kategori Filtresi
-      if (currentCategory !== 'all') {
+      if (currentCategory === 'expiring_soon') {
+        list = list.filter(item => getRemainingDays(item.added_ts) <= 2);
+      } else if (currentCategory !== 'all') {
         list = list.filter(item => item.category === currentCategory);
       }
 
-      // Fiyat Filtresi (Açılış / Fırsat Fiyatına Göre)
+      // Fiyat Filtresi
       if (priceFilter !== 'all') {
         list = list.filter(item => {
           const price = item.offerPrice || 0;
@@ -242,16 +261,21 @@
       // Sıralama
       if (sortType === 'profit') {
         list.sort((a, b) => (b.estimatedProfit || 0) - (a.estimatedProfit || 0));
+      } else if (sortType === 'expiring') {
+        list.sort((a, b) => getRemainingDays(a.added_ts) - getRemainingDays(b.added_ts));
       } else if (sortType === 'price_asc') {
         list.sort((a, b) => (a.offerPrice || 0) - (b.offerPrice || 0));
       } else if (sortType === 'price_desc') {
         list.sort((a, b) => (b.offerPrice || 0) - (a.offerPrice || 0));
       }
 
+      // Finansal Takometre Hesaplamaları
       document.getElementById('statTotal').innerText = pool.length;
       document.getElementById('statVisible').innerText = list.length;
 
+      const totalPortfolio = list.reduce((acc, it) => acc + (it.marketPrice || 0), 0);
       const totalProfit = list.reduce((acc, it) => acc + (it.estimatedProfit || 0), 0);
+      document.getElementById('statPortfolio').innerText = '₺' + totalPortfolio.toLocaleString('tr-TR');
       document.getElementById('statProfit').innerText = '₺' + totalProfit.toLocaleString('tr-TR');
 
       const container = document.getElementById('feedContainer');
@@ -259,9 +283,9 @@
       if (list.length === 0) {
         container.innerHTML = `
           <div class="py-16 text-center border border-white/5 rounded-lg bg-panel p-6">
-            <p class="text-sm font-semibold text-white mb-1">Seçilen Fiyat Aralığında İlan Yok</p>
-            <p class="text-xs text-neutral-500 mb-4">Fiyat aralığını genişletin veya filtreleri temizleyin.</p>
-            <button onclick="document.getElementById('priceFilter').value='all'; render();" class="text-xs px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white border border-white/10 transition">Fiyat Filtresini Sıfırla</button>
+            <p class="text-sm font-semibold text-white mb-1">Seçilen Kriterde İlan Bulunamadı</p>
+            <p class="text-xs text-neutral-500 mb-4">Filtreleri sıfırlayarak tüm kümülatif havuza dönebilirsiniz.</p>
+            <button onclick="document.getElementById('priceFilter').value='all'; setCategory('all'); render();" class="text-xs px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white border border-white/10 transition">Filtreleri Sıfırla</button>
           </div>
         `;
         return;
@@ -274,6 +298,11 @@
           : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
         const categoryIcon = item.categoryIcon || (item.category === 'automotive' ? '🚗' : item.category === 'land' ? '🌾' : '🏢');
+
+        const remDays = getRemainingDays(item.added_ts);
+        const remStyle = remDays <= 2 
+          ? 'bg-red-500/10 text-red-400 border-red-500/30 animate-pulse font-bold' 
+          : 'bg-neutral-900 text-neutral-400 border-white/10';
 
         const market = (item.marketPrice || 0).toLocaleString('tr-TR');
         const offer = (item.offerPrice || 0).toLocaleString('tr-TR');
@@ -293,6 +322,9 @@
                 <div class="flex flex-wrap items-center gap-2 mb-1.5 text-xs">
                   <span class="px-2 py-0.5 rounded border ${badgeStyle} font-mono font-medium text-[11px]">
                     ${item.badge || 'FIRSAT'}
+                  </span>
+                  <span class="px-2 py-0.5 rounded border ${remStyle} font-mono text-[11px]">
+                    ⏳ ${remDays} Gün Kaldı
                   </span>
                   <span class="text-neutral-500 font-mono text-[11px]">${docket}</span>
                   <span class="text-neutral-600">•</span>
