@@ -1,6 +1,6 @@
 [
   {
-    "id": "c-1794190342",
+    "id": "c-1794190403",
     "category": "automotive",
     "categoryName": "İkinci El Araç",
     "categoryIcon": "🚗",
@@ -20,7 +20,7 @@
     "isHot": true
   },
   {
-    "id": "l-1794190342",
+    "id": "l-1794190403",
     "category": "land",
     "categoryName": "Arsa & Tarla",
     "categoryIcon": "🌾",
@@ -40,7 +40,7 @@
     "isHot": true
   },
   {
-    "id": "i-1794190342",
+    "id": "i-1794190403",
     "category": "realestate",
     "categoryName": "Konut & İcra",
     "categoryIcon": "🏢",
